@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
 
-class PerkuliahanController extends Controller
+class DataPerkuliahanController extends Controller
 {
     // hanya Admin yang boleh mengakses
     private function cekAdmin(): void

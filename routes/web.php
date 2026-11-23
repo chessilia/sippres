@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\LoginController;
-use App\Http\Controllers\PerkuliahanController;
+use App\Http\Controllers\DataPerkuliahanController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -15,8 +15,8 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
-    Route::get('/admin/perkuliahan', [PerkuliahanController::class, 'getDaftarPerkuliahan'])->name('perkuliahan.daftar');
-    Route::post('/admin/perkuliahan/{id}', [PerkuliahanController::class, 'prosesPerubahan'])->name('perkuliahan.proses');
+    Route::get('/admin/perkuliahan', [DataPerkuliahanController::class, 'getDaftarPerkuliahan'])->name('perkuliahan.daftar');
+    Route::post('/admin/perkuliahan/{id}', [DataPerkuliahanController::class, 'prosesPerubahan'])->name('perkuliahan.proses');
     Route::view('/dashboard/mahasiswa', 'dashboard.mahasiswa')->name('dashboard.mahasiswa');
     Route::view('/dashboard/dosen', 'dashboard.dosen')->name('dashboard.dosen');
     Route::view('/dashboard/admin', 'dashboard.admin')->name('dashboard.admin');
