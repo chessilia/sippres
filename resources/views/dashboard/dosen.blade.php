@@ -1,15 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard Dosen</title>
-</head>
-<body>
-  <h1>Dashboard Dosen</h1>
-  <p>Halo, {{ Auth::user()->nama }}!</p>
-  <form method="POST" action="{{ route('logout') }}">
-    @csrf
-    <button type="submit">Logout</button>
-  </form>
-</body>
-</html>
+@extends('layouts.app')
+
+@section('judul', 'Dashboard Dosen')
+
+@section('isi')
+  <div class="card">
+    <h3>Hi, {{ Auth::user()->nama }}!</h3>
+    <p>Gunakan menu di samping untuk melihat jadwal mengajar dan membuat sesi presensi QR.</p>
+    <a class="btn btn-primary" href="{{ route('presensi.dosen') }}">Buat Sesi Presensi</a>
+    <a class="btn btn-batal" href="{{ route('jadwal') }}">Lihat Jadwal Mengajar</a>
+  </div>
+@endsection

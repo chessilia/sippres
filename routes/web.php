@@ -4,6 +4,8 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\RegistrasiController;
 use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DataPerkuliahanController;
+use App\Http\Controllers\JadwalController;
+use App\Http\Controllers\SesiPresensiController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -15,6 +17,12 @@ Route::post('/login', [LoginController::class, 'login'])->name('login.submit');
 Route::post('/logout', [LoginController::class, 'logout'])->name('logout');
 
 Route::middleware('auth')->group(function () {
+    Route::get('/jadwal', [JadwalController::class, 'getJadwal'])->name('jadwal');
+
+    Route::get('/dosen/presensi', [SesiPresensiController::class, 'getDaftarPerkuliahan'])->name('presensi.dosen');
+    Route::post('/dosen/presensi', [SesiPresensiController::class, 'buatSesi'])->name('presensi.buat');
+    Route::post('/dosen/presensi/{id}/tutup', [SesiPresensiController::class, 'tutupSesi'])->name('presensi.tutup');
+
     Route::get('/admin/perkuliahan', [DataPerkuliahanController::class, 'getDaftarPerkuliahan'])->name('perkuliahan.daftar');
     Route::post('/admin/perkuliahan/{id}', [DataPerkuliahanController::class, 'prosesPerubahan'])->name('perkuliahan.proses');
     Route::view('/dashboard/mahasiswa', 'dashboard.mahasiswa')->name('dashboard.mahasiswa');
