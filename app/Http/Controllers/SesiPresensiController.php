@@ -100,6 +100,19 @@ class SesiPresensiController extends Controller
 
         // generateQRCode(idSesi) lalu simpanKodeQR(idSesi, kodeQR)
         $sesi->update(['kodeQR' => $this->generateQRCode($sesi->idSesi)]);
+                // notifikasi ke mahasiswa peserta kuliah: sesi presensi dibuka (SR-21)
+        $kuliah   = Perkuliahan::find($request->idPerkuliahan);
+        $penerima = DB::table('peserta_kuliah')
+                      ->where('idPerkuliahan', $request->idPerkuliahan)->pluck('idMahasiswa');
+
+        DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
+            'idPenerima' => $idMhs,
+            'jenis'      => 'Presensi',
+            'isi'        => 'Sesi presensi ' . $kuliah->namaMatkul . ' kelas ' . $kuliah->kelas
+                          . ' telah dibuka selama ' . $request->durasi . ' menit',
+            'waktu'      => now(),
+            'statusBaca' => false,
+        ])->all());
 
         return redirect()->route('presensi.dosen')->with('success', 'Sesi presensi berhasil dibuat');
     }

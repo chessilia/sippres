@@ -12,6 +12,9 @@ use App\Http\Controllers\PengajuanIzinController;
 use App\Http\Controllers\KoreksiPresensiController;
 use App\Http\Controllers\RekapKehadiranController;
 use App\Http\Controllers\RiwayatController;
+use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\CrisisCenterController;
+use App\Http\Controllers\PenangananLaporanController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -56,4 +59,15 @@ Route::middleware('auth')->group(function () {
 
     // mahasiswa: riwayat
     Route::get('/mahasiswa/riwayat', [RiwayatController::class, 'getRiwayat'])->name('riwayat');
+        // notifikasi (mahasiswa dan dosen)
+    Route::get('/notifikasi', [NotifikasiController::class, 'getNotifikasi'])->name('notifikasi');
+
+    // lapor kendala (mahasiswa dan dosen)
+    Route::get('/crisis-center', [CrisisCenterController::class, 'index'])->name('crisis.pengguna');
+    Route::post('/crisis-center', [CrisisCenterController::class, 'kirimLaporan'])->name('crisis.kirim');
+
+    // admin: menangani laporan
+    Route::get('/admin/crisis-center', [PenangananLaporanController::class, 'getDaftarLaporan'])->name('crisis.admin');
+    Route::post('/admin/crisis-center/{id}/tindak-lanjut', [PenangananLaporanController::class, 'simpanTindakLanjut'])->name('crisis.tindaklanjut');
+    Route::post('/admin/crisis-center/{id}/tidak-valid', [PenangananLaporanController::class, 'prosesLaporanTidakValid'])->name('crisis.tidakvalid');
 });

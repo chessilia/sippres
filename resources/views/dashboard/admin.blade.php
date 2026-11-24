@@ -1,16 +1,12 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Dashboard Admin</title>
-</head>
-<body>
-  <h1>Dashboard Admin</h1>
-  <p>Halo, {{ Auth::user()->nama }}!</p>
-  <p><a href="{{ route('perkuliahan.daftar') }}">Kelola Data Perkuliahan</a></p>
-  <form method="POST" action="{{ route('logout') }}">
-    @csrf
-    <button type="submit">Logout</button>
-  </form>
-</body>
-</html>
+@extends('layouts.app')
+
+@section('judul', 'Dashboard Admin')
+
+@section('isi')
+  <div class="card">
+    <h3>Hi, {{ Auth::user()->nama }}!</h3>
+    <p>Gunakan menu di samping untuk mengelola data perkuliahan dan menangani laporan kendala.</p>
+    <a class="btn btn-primary" href="{{ route('perkuliahan.daftar') }}">Kelola Data Perkuliahan</a>
+    <a class="btn btn-batal" href="{{ route('crisis.admin') }}">Crisis Center</a>
+  </div>
+@endsection

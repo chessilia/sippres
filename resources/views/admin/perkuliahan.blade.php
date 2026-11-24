@@ -38,7 +38,7 @@
     <a href="{{ route('dashboard.admin') }}">Dashboard</a>
     <a href="{{ route('perkuliahan.daftar') }}" class="aktif">Data Perkuliahan</a>
     <a href="#">Data Pengguna</a>
-    <a href="#">Crisis Center</a>
+    <a href="{{ route('crisis.admin') }}">Crisis Center</a>
     <a href="#">Rekap dan Statistik</a>
   </div>
 

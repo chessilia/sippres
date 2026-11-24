@@ -16,7 +16,7 @@
     label { display:block; font-weight:bold; margin-bottom:4px; }
     input[type=text], input[type=number], select { width:100%; padding:8px; box-sizing:border-box; }
     button, .btn { padding:8px 14px; border:none; border-radius:5px; cursor:pointer;
-                   text-decoration:none; font-size:14px; display:inline-block; }
+    text-decoration:none; font-size:14px; display:inline-block; }
     .btn-primary { background:#007bff; color:#fff; }
     .btn-hapus { background:#dc3545; color:#fff; }
     .btn-batal { background:#ccc; color:#000; }
@@ -36,11 +36,15 @@
     .st-Sakit { background:#f0ad4e; }
     .st-Alpa  { background:#dc3545; }
     .st-Belum { background:#999; }
+    .st-Baru       { background:#17a2b8; }
+    .st-Diproses   { background:#f0ad4e; }
+    .st-Selesai    { background:#28a745; }
+    .st-TidakValid { background:#999; }
   </style>
 </head>
 <body>
 
-  <div class="sidebar">
+    <div class="sidebar">
     <h3>SIPPRES</h3>
     <p style="font-size:12px">Portal {{ Auth::user()->role }}</p>
 
@@ -53,9 +57,7 @@
           $menunggu = \App\Models\PengajuanIzin::where('status', 'Menunggu')
               ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen', Auth::id()))->count();
         @endphp
-        @if ($menunggu > 0)
-        <span class="badge" style="background:#dc3545">{{ $menunggu }}</span>
-        @endif
+        @if ($menunggu > 0) <span class="badge" style="background:#dc3545">{{ $menunggu }}</span> @endif
       </a>
       <a href="{{ route('koreksi.dosen') }}">Data Presensi</a>
       <a href="{{ route('rekap.dosen') }}">Rekap Kehadiran</a>
@@ -65,7 +67,24 @@
       <a href="{{ route('presensi.mahasiswa') }}">Presensi</a>
       <a href="{{ route('izin.mahasiswa') }}">Pengajuan Izin</a>
       <a href="{{ route('riwayat') }}">Riwayat</a>
-      <a href="#">Notifikasi</a>
+    @elseif (Auth::user()->role === 'Admin')
+      <a href="{{ route('dashboard.admin') }}">Dashboard</a>
+      <a href="{{ route('perkuliahan.daftar') }}">Data Perkuliahan</a>
+      <a href="#">Data Pengguna</a>
+      <a href="{{ route('crisis.admin') }}">Crisis Center
+        @php $laporanBaru = \App\Models\LaporanKendala::where('status', 'Baru')->count(); @endphp
+        @if ($laporanBaru > 0) <span class="badge" style="background:#dc3545">{{ $laporanBaru }}</span> @endif
+      </a>
+      <a href="#">Rekap dan Statistik</a>
+    @endif
+
+    @if (in_array(Auth::user()->role, ['Mahasiswa', 'Dosen']))
+      <hr>
+      <a href="{{ route('notifikasi') }}">Notifikasi
+        @php $belumBaca = \App\Models\Notifikasi::where('idPenerima', Auth::id())->where('statusBaca', false)->count(); @endphp
+        @if ($belumBaca > 0) <span class="badge" style="background:#dc3545">{{ $belumBaca }}</span> @endif
+      </a>
+      <a href="{{ route('crisis.pengguna') }}">Lapor Kendala</a>
     @endif
   </div>
 

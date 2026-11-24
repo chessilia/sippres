@@ -11,4 +11,9 @@ class Notifikasi extends Model
     public    $timestamps = false;
 
     protected $fillable = ['idPenerima', 'jenis', 'isi', 'waktu', 'statusBaca'];
+
+    protected $casts = [
+        'waktu'      => 'datetime',
+        'statusBaca' => 'boolean',
+    ];
 }

@@ -118,6 +118,16 @@ class PresensiController extends Controller
             'status'      => 'Hadir',
         ]);
 
+        // notifikasi: presensi berhasil dicatat (SR-21)
+        DB::table('notifikasi')->insert([
+            'idPenerima' => $idMahasiswa,
+            'jenis'      => 'Presensi',
+            'isi'        => 'Presensi ' . $sesi->perkuliahan->namaMatkul
+                          . ' berhasil dicatat pukul ' . now()->format('H:i'),
+            'waktu'      => now(),
+            'statusBaca' => false,
+        ]);
+
         return redirect()->route('presensi.mahasiswa')->with('success', 'Presensi berhasil dicatat');
     }
 
