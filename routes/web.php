@@ -9,6 +9,9 @@ use App\Http\Controllers\SesiPresensiController;
 use App\Http\Controllers\PresensiController;
 use App\Http\Controllers\AjukanIzinController;
 use App\Http\Controllers\PengajuanIzinController;
+use App\Http\Controllers\KoreksiPresensiController;
+use App\Http\Controllers\RekapKehadiranController;
+use App\Http\Controllers\RiwayatController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -45,4 +48,12 @@ Route::middleware('auth')->group(function () {
 
     // berkas bukti (dicek hak aksesnya di controller)
     Route::get('/izin/{id}/bukti', [PengajuanIzinController::class, 'bukti'])->name('izin.bukti');
+    // dosen: koreksi presensi dan rekap kehadiran
+    Route::get('/dosen/data-presensi', [KoreksiPresensiController::class, 'getDataPresensi'])->name('koreksi.dosen');
+    Route::post('/dosen/data-presensi', [KoreksiPresensiController::class, 'koreksiPresensi'])->name('koreksi.simpan');
+    Route::get('/dosen/rekap', [RekapKehadiranController::class, 'getRekapKehadiran'])->name('rekap.dosen');
+    Route::get('/dosen/rekap/ekspor', [RekapKehadiranController::class, 'ekspor'])->name('rekap.ekspor');
+
+    // mahasiswa: riwayat
+    Route::get('/mahasiswa/riwayat', [RiwayatController::class, 'getRiwayat'])->name('riwayat');
 });

@@ -13,4 +13,11 @@ class Presensi extends Model
     protected $fillable = [
         'idMahasiswa', 'idSesi', 'waktu', 'lokasi', 'status', 'keterangan',
     ];
+
+    protected $casts = ['waktu' => 'datetime'];
+
+    public function sesi()
+    {
+        return $this->belongsTo(SesiPresensi::class, 'idSesi', 'idSesi');
+    }
 }

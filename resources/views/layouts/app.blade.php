@@ -31,6 +31,11 @@
     .st-Menunggu  { background:#f0ad4e; }
     .st-Disetujui { background:#28a745; }
     .st-Ditolak   { background:#dc3545; }
+    .st-Hadir { background:#28a745; }
+    .st-Izin  { background:#17a2b8; }
+    .st-Sakit { background:#f0ad4e; }
+    .st-Alpa  { background:#dc3545; }
+    .st-Belum { background:#999; }
   </style>
 </head>
 <body>
@@ -52,14 +57,14 @@
         <span class="badge" style="background:#dc3545">{{ $menunggu }}</span>
         @endif
       </a>
-      <a href="#">Data Presensi</a>
-      <a href="#">Rekap Kehadiran</a>
+      <a href="{{ route('koreksi.dosen') }}">Data Presensi</a>
+      <a href="{{ route('rekap.dosen') }}">Rekap Kehadiran</a>
     @elseif (Auth::user()->role === 'Mahasiswa')
       <a href="{{ route('dashboard.mahasiswa') }}">Dashboard</a>
       <a href="{{ route('jadwal') }}">Jadwal Kuliah</a>
       <a href="{{ route('presensi.mahasiswa') }}">Presensi</a>
       <a href="{{ route('izin.mahasiswa') }}">Pengajuan Izin</a>
-      <a href="#">Riwayat</a>
+      <a href="{{ route('riwayat') }}">Riwayat</a>
       <a href="#">Notifikasi</a>
     @endif
   </div>
