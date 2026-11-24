@@ -7,6 +7,8 @@ use App\Http\Controllers\DataPerkuliahanController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\SesiPresensiController;
 use App\Http\Controllers\PresensiController;
+use App\Http\Controllers\AjukanIzinController;
+use App\Http\Controllers\PengajuanIzinController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -31,4 +33,16 @@ Route::middleware('auth')->group(function () {
     Route::view('/dashboard/admin', 'dashboard.admin')->name('dashboard.admin');
     Route::get('/mahasiswa/presensi', [PresensiController::class, 'index'])->name('presensi.mahasiswa');
     Route::post('/mahasiswa/presensi', [PresensiController::class, 'kirimPresensi'])->name('presensi.kirim');
+    // mahasiswa: ajukan izin
+    Route::get('/mahasiswa/izin', [AjukanIzinController::class, 'getDataPerkuliahan'])->name('izin.mahasiswa');
+    Route::post('/mahasiswa/izin', [AjukanIzinController::class, 'kirimPengajuan'])->name('izin.kirim');
+    Route::post('/mahasiswa/izin/{id}/ubah', [AjukanIzinController::class, 'ubahPengajuan'])->name('izin.ubah');
+    Route::post('/mahasiswa/izin/{id}/batal', [AjukanIzinController::class, 'batalkanPengajuan'])->name('izin.batal');
+
+    // dosen: proses pengajuan
+    Route::get('/dosen/izin', [PengajuanIzinController::class, 'getDaftarPengajuan'])->name('izin.dosen');
+    Route::post('/dosen/izin/{id}', [PengajuanIzinController::class, 'prosesKeputusan'])->name('izin.proses');
+
+    // berkas bukti (dicek hak aksesnya di controller)
+    Route::get('/izin/{id}/bukti', [PengajuanIzinController::class, 'bukti'])->name('izin.bukti');
 });

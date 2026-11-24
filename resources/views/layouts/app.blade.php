@@ -27,6 +27,10 @@
     .tab.aktif { background:#007bff; color:#fff; }
     .progress { background:#e5e9ef; border-radius:5px; height:12px; }
     .progress div { background:#28a745; height:12px; border-radius:5px; }
+
+    .st-Menunggu  { background:#f0ad4e; }
+    .st-Disetujui { background:#28a745; }
+    .st-Ditolak   { background:#dc3545; }
   </style>
 </head>
 <body>
@@ -39,14 +43,22 @@
       <a href="{{ route('dashboard.dosen') }}">Dashboard</a>
       <a href="{{ route('jadwal') }}">Jadwal Mengajar</a>
       <a href="{{ route('presensi.dosen') }}">Presensi QR</a>
-      <a href="#">Pengajuan Izin</a>
+      <a href="{{ route('izin.dosen') }}">Pengajuan Izin
+        @php
+          $menunggu = \App\Models\PengajuanIzin::where('status', 'Menunggu')
+              ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen', Auth::id()))->count();
+        @endphp
+        @if ($menunggu > 0)
+        <span class="badge" style="background:#dc3545">{{ $menunggu }}</span>
+        @endif
+      </a>
       <a href="#">Data Presensi</a>
       <a href="#">Rekap Kehadiran</a>
     @elseif (Auth::user()->role === 'Mahasiswa')
       <a href="{{ route('dashboard.mahasiswa') }}">Dashboard</a>
       <a href="{{ route('jadwal') }}">Jadwal Kuliah</a>
       <a href="{{ route('presensi.mahasiswa') }}">Presensi</a>
-      <a href="#">Pengajuan Izin</a>
+      <a href="{{ route('izin.mahasiswa') }}">Pengajuan Izin</a>
       <a href="#">Riwayat</a>
       <a href="#">Notifikasi</a>
     @endif
