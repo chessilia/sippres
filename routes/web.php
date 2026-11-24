@@ -74,6 +74,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dosen/presensi', [SesiPresensiController::class, 'getDaftarPerkuliahan'])->name('presensi.dosen');
     Route::post('/dosen/presensi', [SesiPresensiController::class, 'buatSesi'])->name('presensi.buat');
     Route::post('/dosen/presensi/{id}/tutup', [SesiPresensiController::class, 'tutupSesi'])->name('presensi.tutup');
+    Route::post('/dosen/presensi/{id}/batal', [SesiPresensiController::class, 'batalSesi'])->name('presensi.batal');
     Route::get('/dosen/presensi/{id}/hadir', [SesiPresensiController::class, 'daftarHadir'])->name('presensi.hadir');
 
     Route::get('/dosen/izin', [PengajuanIzinController::class, 'getDaftarPengajuan'])->name('izin.dosen');

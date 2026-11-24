@@ -3,77 +3,296 @@
 @section('judul', 'Riwayat')
 
 @section('isi')
-  <p>Catatan kehadiran dan status pengajuan izinmu.</p>
+<style>
+  .page-subtitle {
+    margin: 0 0 18px;
+    color: var(--text-secondary);
+    font-size: 14.5px;
+  }
 
-  <div>
-    <a class="tab {{ $jenis == 'presensi' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'presensi']) }}">Presensi</a>
-    <a class="tab {{ $jenis == 'izin' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'izin']) }}">Pengajuan Izin</a>
+  /* Filter Tabs */
+  .riwayat-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    border-bottom: 2px solid var(--border);
+  }
+  .riwayat-tabs .tab {
+    margin-right: 0;
+    border-radius: 8px 8px 0 0;
+    padding: 9px 18px;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .riwayat-card {
+    margin-top: 0;
+    border-top-left-radius: 0;
+    border-top: none;
+  }
+
+  /* Split Grid saat Detail Dipilih */
+  .riwayat-layout {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    align-items: start;
+  }
+  .riwayat-layout.has-detail {
+    grid-template-columns: 1.35fr 1fr;
+  }
+
+  .row-active {
+    background: #eff6ff !important;
+  }
+
+  /* Detail Panel */
+  .detail-card {
+    margin-top: 0;
+    position: sticky;
+    top: 84px;
+    border-top: 4px solid var(--primary);
+  }
+  .detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 12px;
+    margin-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-header h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+    font-size: 18px;
+  }
+  .detail-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 10px;
+    border-bottom: 1px dashed var(--border);
+    font-size: 14px;
+  }
+  .detail-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+  .detail-label {
+    color: var(--text-muted);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .detail-val {
+    color: var(--text-main);
+    font-weight: 700;
+    text-align: right;
+  }
+  .note-box {
+    margin-top: 14px;
+    background: var(--bg-subtle);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 13.5px;
+    line-height: 1.55;
+  }
+  .note-label {
+    display: block;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+  }
+  .empty-box {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  @media (max-width: 960px) {
+    .riwayat-layout,
+    .riwayat-layout.has-detail {
+      grid-template-columns: 1fr;
+    }
+    .detail-card {
+      position: static;
+    }
+  }
+</style>
+
+  <p class="page-subtitle">Catatan lengkap riwayat presensi perkuliahan dan status pengajuan izin ketidakhadiran Anda.</p>
+
+  {{-- Tab Jenis Riwayat --}}
+  <div class="riwayat-tabs">
+    <a class="tab {{ $jenis == 'presensi' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'presensi']) }}">
+      <i data-lucide="check-square" style="width:15px;height:15px"></i> Presensi
+    </a>
+    <a class="tab {{ $jenis == 'izin' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'izin']) }}">
+      <i data-lucide="file-text" style="width:15px;height:15px"></i> Pengajuan Izin
+    </a>
   </div>
 
-  <div class="card" style="margin-top:0">
-    @if ($daftar->isEmpty())
-      <p>Riwayat belum tersedia.</p>
-    @elseif ($jenis == 'presensi')
-      <table style="width:100%; border-collapse:collapse;">
-        <tr>
-          <th style="text-align:left">Mata Kuliah</th>
-          <th style="text-align:left">Pertemuan</th>
-          <th style="text-align:left">Tanggal</th>
-          <th style="text-align:left">Status</th>
-          <th></th>
-        </tr>
-        @foreach ($daftar as $p)
-          <tr>
-            <td>{{ $p->sesi->perkuliahan->namaMatkul }}</td>
-            <td>{{ $p->pertemuan }}</td>
-            <td>{{ $p->waktu->format('d/m/Y H:i') }}</td>
-            <td><span class="badge st-{{ $p->status }}">{{ $p->status }}</span></td>
-            <td><a href="{{ route('riwayat', ['jenis' => 'presensi', 'id' => $p->idPresensi]) }}">Detail</a></td>
-          </tr>
-        @endforeach
-      </table>
-    @else
-      <table style="width:100%; border-collapse:collapse;">
-        <tr>
-          <th style="text-align:left">Mata Kuliah</th>
-          <th style="text-align:left">Pertemuan</th>
-          <th style="text-align:left">Tanggal</th>
-          <th style="text-align:left">Status</th>
-          <th></th>
-        </tr>
-        @foreach ($daftar as $z)
-          <tr>
-            <td>{{ $z->perkuliahan->namaMatkul }}</td>
-            <td>{{ $z->pertemuan }}</td>
-            <td>{{ $z->tanggalPengajuan->format('d/m/Y H:i') }}</td>
-            <td><span class="badge st-{{ $z->status }}">{{ $z->status }}</span></td>
-            <td><a href="{{ route('riwayat', ['jenis' => 'izin', 'id' => $z->idIzin]) }}">Detail</a></td>
-          </tr>
-        @endforeach
-      </table>
-    @endif
-  </div>
-
-  {{-- Detail riwayat --}}
-  @if ($detail)
-    <div class="card">
-      <h3>Detail Riwayat</h3>
-      @if ($jenis == 'presensi')
-        <p>Mata kuliah: {{ $detail->sesi->perkuliahan->namaMatkul }} (Kelas {{ $detail->sesi->perkuliahan->kelas }})</p>
-        <p>Pertemuan: {{ $detail->pertemuan }}</p>
-        <p>Waktu: {{ $detail->waktu->format('d/m/Y H:i') }}</p>
-        <p>Status: <span class="badge st-{{ $detail->status }}">{{ $detail->status }}</span></p>
-        <p>Keterangan: {{ $detail->keterangan ?? '-' }}</p>
+  <div class="riwayat-layout {{ $detail ? 'has-detail' : '' }}">
+    {{-- Tabel Riwayat --}}
+    <div class="card riwayat-card">
+      @if ($daftar->isEmpty())
+        <div class="empty-box">
+          {{ $jenis == 'presensi' ? 'Riwayat presensi belum tersedia.' : 'Riwayat pengajuan izin belum tersedia.' }}
+        </div>
+      @elseif ($jenis == 'presensi')
+        <table>
+          <thead>
+            <tr>
+              <th>Mata Kuliah</th>
+              <th style="text-align:center">Pertemuan</th>
+              <th>Waktu Presensi</th>
+              <th>Status</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach ($daftar as $p)
+              <tr class="{{ $detail && $detail->idPresensi == $p->idPresensi ? 'row-active' : '' }}">
+                <td>
+                  <strong>{{ $p->sesi->perkuliahan->namaMatkul }}</strong><br>
+                  <small style="color:var(--text-muted)">Kelas {{ $p->sesi->perkuliahan->kelas }}</small>
+                </td>
+                <td style="text-align:center">
+                  <span class="badge st-Izin">Ke-{{ $p->pertemuan }}</span>
+                </td>
+                <td style="white-space:nowrap">{{ $p->waktu->format('d/m/Y H:i') }}</td>
+                <td><span class="badge st-{{ $p->status }}">{{ $p->status }}</span></td>
+                <td style="text-align:right">
+                  <a class="btn {{ $detail && $detail->idPresensi == $p->idPresensi ? 'btn-primary' : 'btn-batal' }}"
+                     style="padding:5px 11px; font-size:12.5px"
+                     href="{{ route('riwayat', ['jenis' => 'presensi', 'id' => $p->idPresensi]) }}">
+                    Detail
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
       @else
-        <p>Mata kuliah: {{ $detail->perkuliahan->namaMatkul }} (Kelas {{ $detail->perkuliahan->kelas }})</p>
-        <p>Pertemuan: {{ $detail->pertemuan }}</p>
-        <p>Diajukan: {{ $detail->tanggalPengajuan->format('d/m/Y H:i') }}</p>
-        <p>Alasan: {{ $detail->alasan }}</p>
-        <p>Status: <span class="badge st-{{ $detail->status }}">{{ $detail->status }}</span></p>
-        @if ($detail->fileBukti)
-          <p><a href="{{ route('izin.bukti', $detail->idIzin) }}" target="_blank">Lihat bukti</a></p>
-        @endif
+        <table>
+          <thead>
+            <tr>
+              <th>Mata Kuliah</th>
+              <th style="text-align:center">Pertemuan</th>
+              <th>Tanggal Ajuan</th>
+              <th>Status</th>
+              <th style="text-align:right">Aksi</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach ($daftar as $z)
+              <tr class="{{ $detail && $detail->idIzin == $z->idIzin ? 'row-active' : '' }}">
+                <td>
+                  <strong>{{ $z->perkuliahan->namaMatkul }}</strong><br>
+                  <small style="color:var(--text-muted)">Kelas {{ $z->perkuliahan->kelas }}</small>
+                </td>
+                <td style="text-align:center">
+                  <span class="badge st-Izin">Ke-{{ $z->pertemuan }}</span>
+                </td>
+                <td style="white-space:nowrap">{{ $z->tanggalPengajuan->format('d/m/Y H:i') }}</td>
+                <td><span class="badge st-{{ $z->status }}">{{ $z->status }}</span></td>
+                <td style="text-align:right">
+                  <a class="btn {{ $detail && $detail->idIzin == $z->idIzin ? 'btn-primary' : 'btn-batal' }}"
+                     style="padding:5px 11px; font-size:12.5px"
+                     href="{{ route('riwayat', ['jenis' => 'izin', 'id' => $z->idIzin]) }}">
+                    Detail
+                  </a>
+                </td>
+              </tr>
+            @endforeach
+          </tbody>
+        </table>
       @endif
     </div>
-  @endif
+
+    {{-- Detail Riwayat --}}
+    @if ($detail)
+      <div class="card detail-card">
+        <div class="detail-header">
+          <h3>{{ $jenis == 'presensi' ? 'Detail Presensi' : 'Detail Pengajuan Izin' }}</h3>
+          <a href="{{ route('riwayat', ['jenis' => $jenis]) }}" class="btn btn-batal" style="padding:5px 10px; font-size:12.5px">
+            <i data-lucide="x" style="width:14px;height:14px"></i> Tutup
+          </a>
+        </div>
+
+        @if ($jenis == 'presensi')
+          <div class="detail-list">
+            <div class="detail-row">
+              <span class="detail-label">Mata Kuliah</span>
+              <span class="detail-val">{{ $detail->sesi->perkuliahan->namaMatkul }} (Kelas {{ $detail->sesi->perkuliahan->kelas }})</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Pertemuan</span>
+              <span class="detail-val">Pertemuan ke-{{ $detail->pertemuan }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Waktu Tercatat</span>
+              <span class="detail-val">{{ $detail->waktu->format('d/m/Y H:i') }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Status Kehadiran</span>
+              <span class="detail-val"><span class="badge st-{{ $detail->status }}">{{ $detail->status }}</span></span>
+            </div>
+          </div>
+
+          <div class="note-box">
+            <span class="note-label">Keterangan</span>
+            <div>{{ $detail->keterangan ?? 'Tidak ada catatan tambahan.' }}</div>
+          </div>
+        @else
+          <div class="detail-list">
+            <div class="detail-row">
+              <span class="detail-label">Mata Kuliah</span>
+              <span class="detail-val">{{ $detail->perkuliahan->namaMatkul }} (Kelas {{ $detail->perkuliahan->kelas }})</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Pertemuan</span>
+              <span class="detail-val">Pertemuan ke-{{ $detail->pertemuan }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Waktu Pengajuan</span>
+              <span class="detail-val">{{ $detail->tanggalPengajuan->format('d/m/Y H:i') }}</span>
+            </div>
+            <div class="detail-row">
+              <span class="detail-label">Status Pengajuan</span>
+              <span class="detail-val"><span class="badge st-{{ $detail->status }}">{{ $detail->status }}</span></span>
+            </div>
+            @if ($detail->fileBukti)
+              <div class="detail-row">
+                <span class="detail-label">Bukti Pendukung</span>
+                <span class="detail-val">
+                  <a class="btn btn-batal" style="padding:4px 10px; font-size:12.5px"
+                     href="{{ route('izin.bukti', $detail->idIzin) }}" target="_blank">
+                    <i data-lucide="paperclip" style="width:13px;height:13px;color:var(--primary)"></i> Lihat Bukti
+                  </a>
+                </span>
+              </div>
+            @endif
+          </div>
+
+          <div class="note-box">
+            <span class="note-label">Alasan Ketidakhadiran</span>
+            <div>{{ $detail->alasan }}</div>
+          </div>
+        @endif
+      </div>
+    @endif
+  </div>
 @endsection

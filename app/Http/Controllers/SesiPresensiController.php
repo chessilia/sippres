@@ -18,13 +18,51 @@ class SesiPresensiController extends Controller
         abort_unless(Auth::user()->role === 'Dosen', 403);
     }
 
+    // kirim notifikasi ke seluruh peserta kuliah saat sesi ditutup (manual maupun otomatis)
+    private function kirimNotifTutupSesi(SesiPresensi $sesi, bool $otomatis = false): void
+    {
+        $sesi->loadMissing('perkuliahan');
+
+        $penerima = DB::table('peserta_kuliah')
+            ->where('idPerkuliahan', $sesi->idPerkuliahan)
+            ->pluck('idMahasiswa');
+
+        if ($penerima->isEmpty()) {
+            return;
+        }
+
+        $sudahPresensi = DB::table('presensi')
+            ->where('idSesi', $sesi->idSesi)
+            ->pluck('status', 'idMahasiswa');
+
+        $sekarang   = now();
+        $namaMatkul = $sesi->perkuliahan->namaMatkul;
+        $kelas      = $sesi->perkuliahan->kelas;
+        $keterangan = $otomatis ? 'telah berakhir otomatis' : 'telah ditutup oleh dosen';
+
+        $notifikasi = $penerima->map(function ($idMhs) use ($sudahPresensi, $namaMatkul, $kelas, $keterangan, $sekarang) {
+            $statusAkhir = $sudahPresensi[$idMhs] ?? 'Alpa';
+
+            return [
+                'idPenerima' => $idMhs,
+                'jenis'      => 'Presensi',
+                'isi'        => "Sesi presensi {$namaMatkul} kelas {$kelas} {$keterangan}. Status akhir kamu: {$statusAkhir}.",
+                'waktu'      => $sekarang,
+                'statusBaca' => false,
+            ];
+        })->all();
+
+        DB::table('notifikasi')->insert($notifikasi);
+    }
+
     // sesi yang sudah melewati durasinya otomatis menjadi "Selesai"
     private function tutupOtomatis(): void
     {
-        SesiPresensi::where('status', 'Aktif')->get()->each(function ($sesi) {
+        SesiPresensi::with('perkuliahan')->where('status', 'Aktif')->get()->each(function ($sesi) {
             $berakhir = $sesi->waktuMulai->copy()->addMinutes($sesi->durasi);
             if (now()->greaterThanOrEqualTo($berakhir)) {
                 $sesi->update(['status' => 'Selesai']);
+                $this->kirimNotifTutupSesi($sesi, true);
             }
         });
     }
@@ -37,9 +75,22 @@ class SesiPresensiController extends Controller
 
         $idDosen = Auth::id();
 
+        $riwayatSesi = SesiPresensi::with('perkuliahan')
+            ->where('status', 'Selesai')
+            ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen', $idDosen))
+            ->orderByDesc('waktuMulai')
+            ->limit(15)
+            ->get()
+            ->each(function ($sesi) {
+                $sesi->hadir = DB::table('presensi')->where('idSesi', $sesi->idSesi)->count();
+                $sesi->total = DB::table('peserta_kuliah')
+                                 ->where('idPerkuliahan', $sesi->idPerkuliahan)->count();
+            });
+
         return view('dosen.presensi', [
-            'daftar'    => Perkuliahan::where('idDosen', $idDosen)->orderBy('idPerkuliahan')->get(),
-            'sesiAktif' => $this->getSesiAktif($idDosen),
+            'daftar'      => Perkuliahan::where('idDosen', $idDosen)->orderBy('idPerkuliahan')->get(),
+            'sesiAktif'   => $this->getSesiAktif($idDosen),
+            'riwayatSesi' => $riwayatSesi,
         ]);
     }
 
@@ -100,19 +151,22 @@ class SesiPresensiController extends Controller
 
         // generateQRCode(idSesi) lalu simpanKodeQR(idSesi, kodeQR)
         $sesi->update(['kodeQR' => $this->generateQRCode($sesi->idSesi)]);
-                // notifikasi ke mahasiswa peserta kuliah: sesi presensi dibuka (SR-21)
+
+        // notifikasi ke mahasiswa peserta kuliah: sesi presensi dibuka (SR-21)
         $kuliah   = Perkuliahan::find($request->idPerkuliahan);
         $penerima = DB::table('peserta_kuliah')
                       ->where('idPerkuliahan', $request->idPerkuliahan)->pluck('idMahasiswa');
 
-        DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
-            'idPenerima' => $idMhs,
-            'jenis'      => 'Presensi',
-            'isi'        => 'Sesi presensi ' . $kuliah->namaMatkul . ' kelas ' . $kuliah->kelas
-                          . ' telah dibuka selama ' . $request->durasi . ' menit',
-            'waktu'      => now(),
-            'statusBaca' => false,
-        ])->all());
+        if ($penerima->isNotEmpty()) {
+            DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
+                'idPenerima' => $idMhs,
+                'jenis'      => 'Presensi',
+                'isi'        => 'Sesi presensi ' . $kuliah->namaMatkul . ' kelas ' . $kuliah->kelas
+                              . ' telah dibuka selama ' . $request->durasi . ' menit',
+                'waktu'      => now(),
+                'statusBaca' => false,
+            ])->all());
+        }
 
         return redirect()->route('presensi.dosen')->with('success', 'Sesi presensi berhasil dibuat');
     }
@@ -137,6 +191,7 @@ class SesiPresensiController extends Controller
 
         try {
             $sesi->update(['status' => 'Selesai']);     // updateStatusSesi(idSesi, "Selesai")
+            $this->kirimNotifTutupSesi($sesi, false);    // kirim notifikasi ke peserta kuliah
         } catch (\Throwable $e) {
             return back()->with('error', 'Sesi gagal ditutup');
         }
@@ -144,7 +199,51 @@ class SesiPresensiController extends Controller
         return redirect()->route('presensi.dosen')->with('success', 'Sesi berhasil ditutup');
     }
 
-        // daftar mahasiswa yang sudah presensi (dipanggil berkala oleh halaman dosen)
+    // batalSesi(idSesi): batalkan & hapus sesi presensi (baik aktif maupun selesai)
+    public function batalSesi($id)
+    {
+        $this->cekDosen();
+
+        $sesi = SesiPresensi::with('perkuliahan')->findOrFail($id);
+        abort_unless($sesi->perkuliahan->idDosen == Auth::id(), 403);
+
+        $namaMatkul    = $sesi->perkuliahan->namaMatkul;
+        $kelas         = $sesi->perkuliahan->kelas;
+        $idPerkuliahan = $sesi->idPerkuliahan;
+        $wasAktif      = $sesi->status === 'Aktif';
+
+        try {
+            DB::transaction(function () use ($sesi) {
+                DB::table('presensi')->where('idSesi', $sesi->idSesi)->delete();
+                $sesi->delete();
+            });
+
+            $penerima = DB::table('peserta_kuliah')
+                ->where('idPerkuliahan', $idPerkuliahan)
+                ->pluck('idMahasiswa');
+
+            if ($penerima->isNotEmpty()) {
+                $sekarang = now();
+                $pesan    = $wasAktif
+                    ? "Sesi presensi {$namaMatkul} kelas {$kelas} telah dibatalkan oleh dosen."
+                    : "Riwayat sesi presensi {$namaMatkul} kelas {$kelas} telah dihapus oleh dosen.";
+
+                DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
+                    'idPenerima' => $idMhs,
+                    'jenis'      => 'Presensi',
+                    'isi'        => $pesan,
+                    'waktu'      => $sekarang,
+                    'statusBaca' => false,
+                ])->all());
+            }
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Sesi presensi gagal dihapus');
+        }
+
+        return redirect()->route('presensi.dosen')->with('success', 'Sesi presensi berhasil dihapus');
+    }
+
+    // daftar mahasiswa yang sudah presensi (dipanggil berkala oleh halaman dosen)
     public function daftarHadir($id)
     {
         $this->cekDosen();
