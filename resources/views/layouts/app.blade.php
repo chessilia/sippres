@@ -51,6 +51,14 @@
       .main { padding:0; }
     .avatar { width:72px; height:72px; border-radius:50%; background:#1f3b63; color:#fff;
       display:flex; align-items:center; justify-content:center; font-size:28px; object-fit:cover; }
+          @media (max-width: 768px) {
+      body { flex-direction: column; }
+      .sidebar { width:100%; min-height:auto; display:flex; flex-wrap:wrap; gap:4px 16px; align-items:center; }
+      .sidebar h3, .sidebar p, .sidebar hr { display:none; }
+      .main { padding:14px; }
+      table { display:block; overflow-x:auto; }
+      .tab { padding:6px 10px; }
+    }
     }
   </style>
 </head>

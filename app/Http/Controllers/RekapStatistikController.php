@@ -62,6 +62,7 @@ class RekapStatistikController extends Controller
             'akhir'       => $awal->copy()->endOfMonth(),
             'dosen'       => $request->dosen,
             'perkuliahan' => $request->perkuliahan,
+            'status'      => in_array($request->status, ['Hadir', 'Izin', 'Sakit', 'Alpa']) ? $request->status : null,
         ];
     }
 
@@ -85,7 +86,15 @@ class RekapStatistikController extends Controller
             ->whereBetween('waktuMulai', [$f['awal'], $f['akhir']])
             ->whereIn('idPerkuliahan', $kuliah->pluck('idPerkuliahan')))->count();
 
-        return $this->olahRekapStatistik($slot, $slotLalu, $izin, $laporan, $tercatat);
+        $data = $this->olahRekapStatistik($slot, $slotLalu, $izin, $laporan, $tercatat);
+
+        // daftar kehadiran rinci, dapat difilter menurut status kehadiran
+        $data['presensi']['detail'] = $slot
+            ->when($f['status'], fn ($c, $s) => $c->where('status', $s))
+            ->sortBy(fn ($x) => $x['sesi']->waktuMulai->timestamp)
+            ->values();
+
+        return $data;
     }
 
     // ambilDataPresensi(periodeAwal, periodeAkhir): satu baris = satu mahasiswa pada satu pertemuan
@@ -106,6 +115,7 @@ class RekapStatistikController extends Controller
                     $slot->push([
                         'perkuliahan' => $p,
                         'sesi'        => $s,
+                        'mahasiswa'   => $m,
                         'status'      => $matriks[$m->idUser][$s->pertemuan]['status'],
                     ]);
                 }
@@ -238,6 +248,16 @@ class RekapStatistikController extends Controller
                     fputcsv($out, [
                         $r['perkuliahan']->namaMatkul, $r['perkuliahan']->kelas, $r['perkuliahan']->dosen->nama ?? '-',
                         $r['pertemuan'], $r['Hadir'], $r['Izin'], $r['Sakit'], $r['Alpa'], $r['persen'],
+                    ], ';');
+                }
+
+                fputcsv($out, [], ';');
+                fputcsv($out, ['DETAIL KEHADIRAN' . ($f['status'] ? ' (' . $f['status'] . ')' : '')], ';');
+                fputcsv($out, ['Mahasiswa', 'Mata Kuliah', 'Kelas', 'Pertemuan', 'Tanggal', 'Status'], ';');
+                foreach ($data['presensi']['detail'] as $r) {
+                    fputcsv($out, [
+                        $r['mahasiswa']->nama, $r['perkuliahan']->namaMatkul, $r['perkuliahan']->kelas,
+                        $r['sesi']->pertemuan, $r['sesi']->waktuMulai->format('d/m/Y'), $r['status'],
                     ], ';');
                 }
             }

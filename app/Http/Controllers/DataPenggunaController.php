@@ -47,6 +47,7 @@ class DataPenggunaController extends Controller
             'detail'  => $this->getDetailPengguna($request->edit, $semua),
             'hapus'   => $hapus,
             'terkait' => $hapus ? $this->cekDataTerkait($hapus) : [],
+            'tambah'  => $request->has('tambah'),
         ]);
     }
 
@@ -163,5 +164,31 @@ class DataPenggunaController extends Controller
             'keikutsertaan kuliah'  => DB::table('peserta_kuliah')->where('idMahasiswa', $user->idUser)->count(),
             'laporan kendala'       => LaporanKendala::where('idPelapor', $user->idUser)->count(),
         ]);
+    }
+
+    // tambahPengguna(nama, username, email, password, role)
+    public function tambahPengguna(Request $request)
+    {
+        $this->cekAdmin();
+
+        $validator = validator($request->all(), [
+            'nama'     => 'required|string|max:100',
+            'username' => 'required|string|max:30|unique:user,username',
+            'email'    => 'required|email|max:100|unique:user,email',
+            'password' => 'required|string|min:8',
+            'role'     => 'required|in:Mahasiswa,Dosen,Admin',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withInput()->with('error', 'Data pengguna tidak valid');
+        }
+
+        try {
+            User::create($request->only(['nama', 'username', 'email', 'password', 'role']));
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Data pengguna gagal ditambahkan');
+        }
+
+        return redirect()->route('pengguna.daftar')->with('success', 'Pengguna berhasil ditambahkan');
     }
 }

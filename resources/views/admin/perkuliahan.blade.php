@@ -71,6 +71,8 @@
       <button type="submit" class="btn-simpan">Cari</button>
     </form>
 
+    <p><a class="btn btn-simpan" href="{{ route('perkuliahan.daftar', ['tambah' => 1]) }}">+ Tambah Perkuliahan</a></p>
+
     <!-- Tabel Perkuliahan -->
     <table>
       <tr>
@@ -85,6 +87,7 @@
           <td>{{ $p->dosen->nama ?? '-' }}</td>
           <td>{{ $p->hari }}, {{ substr($p->jamMulai, 0, 5) }} - {{ substr($p->jamSelesai, 0, 5) }}</td>
           <td>
+            <a class="btn btn-batal" href="{{ route('perkuliahan.daftar', ['peserta' => $p->idPerkuliahan]) }}">Peserta</a>
             <a class="btn btn-edit" href="{{ route('perkuliahan.daftar', ['edit' => $p->idPerkuliahan]) }}">Edit</a>
 
             <form method="POST" action="{{ route('perkuliahan.proses', $p->idPerkuliahan) }}"
@@ -100,6 +103,100 @@
         <tr><td colspan="4">Belum ada data perkuliahan.</td></tr>
       @endforelse
     </table>
+
+    {{-- Panel Tambah Perkuliahan --}}
+    @if ($tambah)
+      <div class="panel">
+        <h3>Tambah Perkuliahan</h3>
+        <form method="POST" action="{{ route('perkuliahan.tambah') }}">
+          @csrf
+          <div class="grid">
+            <div>
+              <label>Kode</label>
+              <input type="text" name="kodeMatkul" maxlength="10" value="{{ old('kodeMatkul') }}" required>
+            </div>
+            <div>
+              <label>Kelas</label>
+              <input type="text" name="kelas" maxlength="5" value="{{ old('kelas') }}" required>
+            </div>
+            <div>
+              <label>Nama Mata Kuliah</label>
+              <input type="text" name="namaMatkul" maxlength="100" value="{{ old('namaMatkul') }}" required>
+            </div>
+            <div>
+              <label>Dosen Pengampu</label>
+              <select name="idDosen" required>
+                @foreach ($daftarDosen as $d)
+                  <option value="{{ $d->idUser }}" @selected(old('idDosen') == $d->idUser)>{{ $d->nama }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div>
+              <label>Hari</label>
+              <select name="hari" required>
+                @foreach (['Senin','Selasa','Rabu','Kamis','Jumat','Sabtu'] as $h)
+                  <option value="{{ $h }}" @selected(old('hari') == $h)>{{ $h }}</option>
+                @endforeach
+              </select>
+            </div>
+            <div>
+              <label>Ruang</label>
+              <input type="text" name="ruang" maxlength="20" value="{{ old('ruang') }}" required>
+            </div>
+            <div>
+              <label>Jam Mulai</label>
+              <input type="time" name="jamMulai" value="{{ old('jamMulai') }}" required>
+            </div>
+            <div>
+              <label>Jam Selesai</label>
+              <input type="time" name="jamSelesai" value="{{ old('jamSelesai') }}" required>
+            </div>
+          </div>
+          <br>
+          <a class="btn btn-batal" href="{{ route('perkuliahan.daftar') }}">Batal</a>
+          <button type="submit" class="btn-simpan">Simpan Perkuliahan</button>
+        </form>
+      </div>
+    @endif
+
+    {{-- Panel Peserta Kuliah --}}
+    @if ($kelola)
+      <div class="panel">
+        <h3>Peserta Kuliah: {{ $kelola->namaMatkul }} (Kelas {{ $kelola->kelas }})</h3>
+        <p>{{ $peserta->count() }} mahasiswa terdaftar.</p>
+
+        @forelse ($peserta as $m)
+          <form method="POST" action="{{ route('peserta.hapus', [$kelola->idPerkuliahan, $m->idUser]) }}"
+                onsubmit="return confirm('Keluarkan {{ $m->nama }} dari perkuliahan ini?')">
+            @csrf
+            {{ $m->nama }} ({{ $m->username }})
+            <button type="submit" class="btn-hapus">Keluarkan</button>
+          </form>
+        @empty
+          <p><em>Belum ada peserta.</em></p>
+        @endforelse
+
+        <h4>Tambah peserta</h4>
+        @if ($calon->isEmpty())
+          <p>Semua mahasiswa sudah terdaftar pada perkuliahan ini.</p>
+        @else
+          <form method="POST" action="{{ route('peserta.tambah', $kelola->idPerkuliahan) }}">
+            @csrf
+            @foreach ($calon as $m)
+              <label style="font-weight:normal">
+                <input type="checkbox" name="mahasiswa[]" value="{{ $m->idUser }}" style="width:auto">
+                {{ $m->nama }} ({{ $m->username }})
+              </label>
+            @endforeach
+            <br>
+            <button type="submit" class="btn-simpan">Tambahkan yang Dipilih</button>
+          </form>
+        @endif
+
+        <br>
+        <a class="btn btn-batal" href="{{ route('perkuliahan.daftar') }}">Tutup</a>
+      </div>
+    @endif
 
     <!-- Panel Edit Perkuliahan (muncul setelah klik Edit) -->
     @if ($detail)

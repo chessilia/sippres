@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB;
 
 class DataPerkuliahanController extends Controller
 {
@@ -16,7 +17,7 @@ class DataPerkuliahanController extends Controller
         abort_unless(Auth::user()->role === 'Admin', 403);
     }
 
-    // getDaftarPerkuliahan() -> UI-019 (daftar + cari + filter hari + panel edit)
+        // getDaftarPerkuliahan() -> UI-019 (daftar, cari, filter hari, panel edit/tambah/peserta)
     public function getDaftarPerkuliahan(Request $request)
     {
         $this->cekAdmin();
@@ -36,10 +37,25 @@ class DataPerkuliahanController extends Controller
             $query->where('hari', $request->hari);
         }
 
+        // panel kelola peserta kuliah
+        $kelola  = $request->filled('peserta') ? Perkuliahan::find($request->peserta) : null;
+        $peserta = collect();
+        $calon   = collect();
+
+        if ($kelola) {
+            $ikut    = DB::table('peserta_kuliah')->where('idPerkuliahan', $kelola->idPerkuliahan)->pluck('idMahasiswa');
+            $peserta = User::whereIn('idUser', $ikut)->orderBy('nama')->get();
+            $calon   = User::where('role', 'Mahasiswa')->whereNotIn('idUser', $ikut)->orderBy('nama')->get();
+        }
+
         return view('admin.perkuliahan', [
-            'daftar'    => $query->orderBy('idPerkuliahan')->get(),
-            'detail'    => $this->getDetailPerkuliahan($request->edit),
+            'daftar'      => $query->orderBy('idPerkuliahan')->get(),
+            'detail'      => $this->getDetailPerkuliahan($request->edit),
             'daftarDosen' => User::where('role', 'Dosen')->get(),
+            'tambah'      => $request->has('tambah'),
+            'kelola'      => $kelola,
+            'peserta'     => $peserta,
+            'calon'       => $calon,
         ]);
     }
 
@@ -101,5 +117,32 @@ class DataPerkuliahanController extends Controller
         ]);
 
         return !$validator->fails();
+    }
+
+        // tambahPerkuliahan(dataBaru) -> cabang "Tambah" pada proses bisnis 4
+    public function tambahPerkuliahan(Request $request)
+    {
+        $this->cekAdmin();
+
+        if (!$this->validasiPerubahan($request)) {
+            return back()->withInput()->with('error', 'Data perkuliahan tidak valid');
+        }
+
+        $sudahAda = Perkuliahan::where('kodeMatkul', $request->kodeMatkul)
+                               ->where('kelas', $request->kelas)->exists();
+        if ($sudahAda) {
+            return back()->withInput()->with('error', 'Perkuliahan dengan kode dan kelas tersebut sudah ada');
+        }
+
+        try {
+            Perkuliahan::create($request->only([
+                'kodeMatkul', 'namaMatkul', 'idDosen',
+                'hari', 'jamMulai', 'jamSelesai', 'ruang', 'kelas',
+            ]));
+        } catch (\Throwable $e) {
+            return back()->withInput()->with('error', 'Data perkuliahan gagal disimpan');
+        }
+
+        return redirect()->route('perkuliahan.daftar')->with('success', 'Data perkuliahan berhasil ditambahkan');
     }
 }

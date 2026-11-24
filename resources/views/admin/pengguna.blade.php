@@ -15,6 +15,8 @@
     </form>
   </div>
 
+  <p><a class="btn btn-primary" href="{{ route('pengguna.daftar', ['tambah' => 1]) }}">+ Tambah Pengguna</a></p>
+
   {{-- Filter peran --}}
   <div>
     <a class="tab {{ !$peran ? 'aktif' : '' }}" href="{{ route('pengguna.daftar', ['cari' => $cari]) }}">Semua ({{ $total }})</a>
@@ -72,6 +74,42 @@
         @csrf
         <input type="hidden" name="lanjut" value="1">
         <button type="submit" class="btn-hapus">Tetap Hapus</button>
+      </form>
+    </div>
+  @endif
+
+  {{-- Panel tambah pengguna --}}
+  @if ($tambah)
+    <div class="card">
+      <h3>Tambah Pengguna</h3>
+      <form method="POST" action="{{ route('pengguna.tambah') }}">
+        @csrf
+        <div class="row">
+          <label for="t_nama">Nama lengkap</label>
+          <input type="text" name="nama" id="t_nama" maxlength="100" required value="{{ old('nama') }}">
+        </div>
+        <div class="row">
+          <label for="t_username">Username</label>
+          <input type="text" name="username" id="t_username" maxlength="30" required value="{{ old('username') }}">
+        </div>
+        <div class="row">
+          <label for="t_email">Email</label>
+          <input type="text" name="email" id="t_email" maxlength="100" required value="{{ old('email') }}">
+        </div>
+        <div class="row">
+          <label for="t_password">Kata sandi awal (min. 8 karakter)</label>
+          <input type="text" name="password" id="t_password" minlength="8" required>
+        </div>
+        <div class="row">
+          <label>Peran</label>
+          @foreach (['Mahasiswa', 'Dosen', 'Admin'] as $r)
+            <label style="display:inline; font-weight:normal; margin-right:12px">
+              <input type="radio" name="role" value="{{ $r }}" @checked(old('role', 'Mahasiswa') == $r)> {{ $r }}
+            </label>
+          @endforeach
+        </div>
+        <a class="btn btn-batal" href="{{ route('pengguna.daftar') }}">Batal</a>
+        <button type="submit" class="btn-primary">Simpan Pengguna</button>
       </form>
     </div>
   @endif

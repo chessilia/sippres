@@ -20,6 +20,7 @@ use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\CrisisCenterController;
 use App\Http\Controllers\PenangananLaporanController;
 use App\Http\Controllers\RekapStatistikController;
+use App\Http\Controllers\PesertaKuliahController;
 
 /*
 |--------------------------------------------------------------------------
@@ -109,4 +110,10 @@ Route::middleware('auth')->group(function () {
 
     Route::get('/admin/statistik', [RekapStatistikController::class, 'getRekapStatistik'])->name('statistik.admin');
     Route::get('/admin/statistik/ekspor', [RekapStatistikController::class, 'ekspor'])->name('statistik.ekspor');
+
+    Route::post('/admin/perkuliahan', [DataPerkuliahanController::class, 'tambahPerkuliahan'])->name('perkuliahan.tambah');
+    Route::post('/admin/perkuliahan/{id}/peserta', [PesertaKuliahController::class, 'tambahPeserta'])->name('peserta.tambah');
+    Route::post('/admin/perkuliahan/{id}/peserta/{idMahasiswa}/hapus', [PesertaKuliahController::class, 'hapusPeserta'])->name('peserta.hapus');
+
+    Route::post('/admin/pengguna', [DataPenggunaController::class, 'tambahPengguna'])->name('pengguna.tambah');
 });

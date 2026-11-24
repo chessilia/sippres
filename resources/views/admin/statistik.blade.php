@@ -40,6 +40,15 @@
           @endforeach
         </select>
       </div>
+      <div class="row">
+        <label for="status">Status kehadiran (untuk detail presensi)</label>
+        <select name="status" id="status">
+          <option value="">Semua status</option>
+          @foreach (['Hadir', 'Izin', 'Sakit', 'Alpa'] as $st)
+            <option value="{{ $st }}" @selected($f['status'] == $st)>{{ $st }}</option>
+          @endforeach
+        </select>
+      </div>
 
       <button type="submit" class="btn-primary">Terapkan</button>
       <a class="btn btn-batal" href="{{ route('statistik.ekspor', request()->query()) }}">Ekspor Excel (CSV)</a>
@@ -124,6 +133,35 @@
               </tr>
             @endforeach
           </table>
+        </div>
+
+        <div class="card">
+          <h3>Detail Kehadiran {{ $f['status'] ? '(' . $f['status'] . ')' : '' }}</h3>
+          @if ($pr['detail']->isEmpty())
+            <p>Tidak ada data untuk status ini.</p>
+          @else
+            <table style="width:100%; border-collapse:collapse;">
+              <tr>
+                <th style="text-align:left">Mahasiswa</th>
+                <th style="text-align:left">Mata Kuliah</th>
+                <th>Pertemuan</th>
+                <th>Tanggal</th>
+                <th>Status</th>
+              </tr>
+              @foreach ($pr['detail']->take(100) as $r)
+                <tr>
+                  <td>{{ $r['mahasiswa']->nama }}</td>
+                  <td>{{ $r['perkuliahan']->namaMatkul }} ({{ $r['perkuliahan']->kelas }})</td>
+                  <td style="text-align:center">{{ $r['sesi']->pertemuan }}</td>
+                  <td style="text-align:center">{{ $r['sesi']->waktuMulai->format('d/m/Y') }}</td>
+                  <td style="text-align:center"><span class="badge st-{{ $r['status'] }}">{{ $r['status'] }}</span></td>
+                </tr>
+              @endforeach
+            </table>
+            @if ($pr['detail']->count() > 100)
+              <p><small>Menampilkan 100 dari {{ $pr['detail']->count() }} baris. Gunakan ekspor untuk data lengkap.</small></p>
+            @endif
+          @endif
         </div>
       @elseif (in_array($f['jenis'], ['Semua', 'Presensi']))
         <div class="card"><p>Data presensi belum tersedia pada periode ini.</p></div>
