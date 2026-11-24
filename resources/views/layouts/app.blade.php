@@ -40,6 +40,16 @@
     .st-Diproses   { background:#f0ad4e; }
     .st-Selesai    { background:#28a745; }
     .st-TidakValid { background:#999; }
+    .st-Mahasiswa { background:#17a2b8; }
+    .st-Dosen     { background:#6f42c1; }
+    .st-Admin     { background:#343a40; }
+    .grid4 { display:grid; grid-template-columns:repeat(auto-fit, minmax(190px, 1fr)); gap:12px; margin-top:16px; }
+    .stat { background:#fff; border:1px solid #ddd; border-radius:8px; padding:14px; }
+    .stat b { font-size:26px; display:block; }
+    @media print {
+      .sidebar, .noprint, .topbar form { display:none !important; }
+      .main { padding:0; }
+    }
   </style>
 </head>
 <body>
@@ -70,12 +80,12 @@
     @elseif (Auth::user()->role === 'Admin')
       <a href="{{ route('dashboard.admin') }}">Dashboard</a>
       <a href="{{ route('perkuliahan.daftar') }}">Data Perkuliahan</a>
-      <a href="#">Data Pengguna</a>
+      <a href="{{ route('pengguna.daftar') }}">Data Pengguna</a>
       <a href="{{ route('crisis.admin') }}">Crisis Center
         @php $laporanBaru = \App\Models\LaporanKendala::where('status', 'Baru')->count(); @endphp
         @if ($laporanBaru > 0) <span class="badge" style="background:#dc3545">{{ $laporanBaru }}</span> @endif
       </a>
-      <a href="#">Rekap dan Statistik</a>
+      <a href="{{ route('statistik.admin') }}">Rekap dan Statistik</a>
     @endif
 
     @if (in_array(Auth::user()->role, ['Mahasiswa', 'Dosen']))

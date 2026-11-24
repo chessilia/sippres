@@ -15,6 +15,8 @@ use App\Http\Controllers\RiwayatController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\CrisisCenterController;
 use App\Http\Controllers\PenangananLaporanController;
+use App\Http\Controllers\DataPenggunaController;
+use App\Http\Controllers\RekapStatistikController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -70,4 +72,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/admin/crisis-center', [PenangananLaporanController::class, 'getDaftarLaporan'])->name('crisis.admin');
     Route::post('/admin/crisis-center/{id}/tindak-lanjut', [PenangananLaporanController::class, 'simpanTindakLanjut'])->name('crisis.tindaklanjut');
     Route::post('/admin/crisis-center/{id}/tidak-valid', [PenangananLaporanController::class, 'prosesLaporanTidakValid'])->name('crisis.tidakvalid');
+        // admin: data pengguna
+    Route::get('/admin/pengguna', [DataPenggunaController::class, 'getDaftarPengguna'])->name('pengguna.daftar');
+    Route::post('/admin/pengguna/{id}', [DataPenggunaController::class, 'perbaruiDataPengguna'])->name('pengguna.perbarui');
+    Route::post('/admin/pengguna/{id}/hapus', [DataPenggunaController::class, 'hapusDataPengguna'])->name('pengguna.hapus');
+
+    // admin: rekap dan statistik
+    Route::get('/admin/statistik', [RekapStatistikController::class, 'getRekapStatistik'])->name('statistik.admin');
+    Route::get('/admin/statistik/ekspor', [RekapStatistikController::class, 'ekspor'])->name('statistik.ekspor');
 });
