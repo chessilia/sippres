@@ -61,4 +61,52 @@ class KehadiranService
 
         return [$pertemuan, $mahasiswa, $hasil];
     }
+        // rata-rata kehadiran (%) seluruh mahasiswa pada sekumpulan perkuliahan; null jika belum ada data
+    public function rataKehadiran($daftarPerkuliahan): ?int
+    {
+        $hadir = 0;
+        $total = 0;
+
+        foreach ($daftarPerkuliahan as $p) {
+            [$pertemuan, , $matriks] = $this->matriks($p->idPerkuliahan);
+
+            foreach ($matriks as $baris) {
+                foreach ($pertemuan as $s) {
+                    if ($s->masihBerlaku()) {
+                        continue;                       // sesi yang masih berlangsung belum dihitung
+                    }
+                    $total++;
+                    if ($baris[$s->pertemuan]['status'] === 'Hadir') {
+                        $hadir++;
+                    }
+                }
+            }
+        }
+
+        return $total ? (int) round($hadir / $total * 100) : null;
+    }
+
+    // jumlah Hadir/Izin/Sakit/Alpa seorang mahasiswa pada semua perkuliahan yang diikuti
+    public function ringkasanMahasiswa($idMahasiswa): array
+    {
+        $hasil = ['Hadir' => 0, 'Izin' => 0, 'Sakit' => 0, 'Alpa' => 0];
+
+        $ikut = DB::table('peserta_kuliah')->where('idMahasiswa', $idMahasiswa)->pluck('idPerkuliahan');
+
+        foreach ($ikut as $idPerkuliahan) {
+            [$pertemuan, , $matriks] = $this->matriks($idPerkuliahan);
+
+            foreach ($pertemuan as $s) {
+                if ($s->masihBerlaku()) {
+                    continue;
+                }
+                $status = $matriks[$idMahasiswa][$s->pertemuan]['status'] ?? null;
+                if ($status && isset($hasil[$status])) {
+                    $hasil[$status]++;
+                }
+            }
+        }
+
+        return $hasil;
+    }
 }

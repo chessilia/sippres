@@ -143,4 +143,29 @@ class SesiPresensiController extends Controller
 
         return redirect()->route('presensi.dosen')->with('success', 'Sesi berhasil ditutup');
     }
+
+        // daftar mahasiswa yang sudah presensi (dipanggil berkala oleh halaman dosen)
+    public function daftarHadir($id)
+    {
+        $this->cekDosen();
+
+        $sesi = SesiPresensi::with('perkuliahan')->findOrFail($id);
+        abort_unless($sesi->perkuliahan->idDosen == Auth::id(), 403);
+
+        $daftar = DB::table('presensi')
+            ->join('user', 'user.idUser', '=', 'presensi.idMahasiswa')
+            ->where('presensi.idSesi', $id)
+            ->where('presensi.status', 'Hadir')
+            ->orderBy('presensi.waktu')
+            ->get(['user.nama', 'presensi.waktu']);
+
+        return response()->json([
+            'hadir'  => $daftar->count(),
+            'total'  => DB::table('peserta_kuliah')->where('idPerkuliahan', $sesi->idPerkuliahan)->count(),
+            'daftar' => $daftar->map(fn ($r) => [
+                'nama'  => $r->nama,
+                'waktu' => \Carbon\Carbon::parse($r->waktu)->format('H:i:s'),
+            ]),
+        ]);
+    }
 }

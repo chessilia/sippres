@@ -49,6 +49,8 @@
     @media print {
       .sidebar, .noprint, .topbar form { display:none !important; }
       .main { padding:0; }
+    .avatar { width:72px; height:72px; border-radius:50%; background:#1f3b63; color:#fff;
+      display:flex; align-items:center; justify-content:center; font-size:28px; object-fit:cover; }
     }
   </style>
 </head>
@@ -96,16 +98,21 @@
       </a>
       <a href="{{ route('crisis.pengguna') }}">Lapor Kendala</a>
     @endif
+    <hr>
+    <a href="{{ route('profil') }}">Profil</a>
   </div>
 
   <div class="main">
-    <div class="topbar">
+        <div class="topbar">
       <h2>@yield('judul')</h2>
-      <form method="POST" action="{{ route('logout') }}" onsubmit="return confirm('Yakin ingin keluar?')">
-        @csrf
-        {{ Auth::user()->nama }}
-        <button type="submit" class="btn-batal">Keluar</button>
-      </form>
+      <div>
+        <a href="{{ route('profil') }}">{{ Auth::user()->nama }}</a>
+        <form method="POST" action="{{ route('logout') }}" style="display:inline"
+              onsubmit="return confirm('Yakin ingin keluar?')">
+          @csrf
+          <button type="submit" class="btn-batal">Keluar</button>
+        </form>
+      </div>
     </div>
 
     @if (session('success')) <div class="alert-success">{{ session('success') }}</div> @endif

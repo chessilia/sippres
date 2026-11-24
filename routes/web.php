@@ -17,6 +17,8 @@ use App\Http\Controllers\CrisisCenterController;
 use App\Http\Controllers\PenangananLaporanController;
 use App\Http\Controllers\DataPenggunaController;
 use App\Http\Controllers\RekapStatistikController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ProfilController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -80,4 +82,15 @@ Route::middleware('auth')->group(function () {
     // admin: rekap dan statistik
     Route::get('/admin/statistik', [RekapStatistikController::class, 'getRekapStatistik'])->name('statistik.admin');
     Route::get('/admin/statistik/ekspor', [RekapStatistikController::class, 'ekspor'])->name('statistik.ekspor');
+        Route::get('/dashboard/mahasiswa', [DashboardController::class, 'mahasiswa'])->name('dashboard.mahasiswa');
+    Route::get('/dashboard/dosen', [DashboardController::class, 'dosen'])->name('dashboard.dosen');
+    Route::get('/dashboard/admin', [DashboardController::class, 'admin'])->name('dashboard.admin');
+
+    // profil
+    Route::get('/profil', [ProfilController::class, 'getProfil'])->name('profil');
+    Route::post('/profil', [ProfilController::class, 'updateProfil'])->name('profil.update');
+    Route::get('/foto/{id}', [ProfilController::class, 'foto'])->name('profil.foto');
+
+    // pemantauan kehadiran real-time (dosen)
+    Route::get('/dosen/presensi/{id}/hadir', [SesiPresensiController::class, 'daftarHadir'])->name('presensi.hadir');
 });

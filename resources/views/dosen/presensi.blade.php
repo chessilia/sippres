@@ -52,11 +52,11 @@
   {{-- Sesi Aktif --}}
   @foreach ($sesiAktif as $s)
     @php
-      $berakhir = $s->waktuMulai->copy()->addMinutes($s->durasi);
+      $berakhir = $s->waktuBerakhir();
       $persen   = $s->total > 0 ? round($s->hadir / $s->total * 100) : 0;
     @endphp
     <div class="card">
-      <span class="badge">Sesi Aktif</span>
+      <span class="badge st-Selesai">Sesi Aktif</span>
       Sisa waktu: <strong class="sisa" data-akhir="{{ $berakhir->timestamp * 1000 }}">...</strong>
 
       <h3>{{ $s->perkuliahan->namaMatkul }} (Kelas {{ $s->perkuliahan->kelas }})</h3>
@@ -67,9 +67,14 @@
       <p>Ruang {{ $s->perkuliahan->ruang }} | Durasi {{ $s->durasi }} mnt |
          Radius {{ $s->radius > 0 ? $s->radius . ' m' : 'tanpa validasi lokasi' }}</p>
       <p>Dimulai: {{ $s->waktuMulai->format('H:i') }}</p>
-      <p>Mahasiswa hadir: {{ $s->hadir }} / {{ $s->total }} ({{ $persen }}%)</p>
-      <progress value="{{ $s->hadir }}" max="{{ max($s->total, 1) }}" style="width:100%"></progress>
-      <br>
+
+      {{-- Pemantauan kehadiran real-time --}}
+      <div class="pantau" data-url="{{ route('presensi.hadir', $s->idSesi) }}">
+        <p>Mahasiswa hadir: <strong class="jml">{{ $s->hadir }} / {{ $s->total }}</strong>
+           (<span class="persen">{{ $persen }}%</span>)</p>
+        <progress value="{{ $persen }}" max="100"></progress>
+        <ul class="daftar-hadir"></ul>
+      </div>
 
       <form method="POST" action="{{ route('presensi.tutup', $s->idSesi) }}"
             onsubmit="return confirm('Tutup sesi presensi ini?')">
@@ -101,12 +106,34 @@
       document.querySelectorAll('.sisa').forEach(function (el) {
         var sisa = Math.floor((Number(el.dataset.akhir) - Date.now()) / 1000);
         if (sisa <= 0) { location.reload(); return; }
-        var m = String(Math.floor(sisa / 60)).padStart(2, '0');
-        var d = String(sisa % 60).padStart(2, '0');
-        el.textContent = m + ':' + d;
+        el.textContent = String(Math.floor(sisa / 60)).padStart(2, '0') + ':' + String(sisa % 60).padStart(2, '0');
       });
     }
     hitungMundur();
     setInterval(hitungMundur, 1000);
+
+    // perbarui daftar mahasiswa hadir setiap 3 detik
+    document.querySelectorAll('.pantau').forEach(function (el) {
+      function muat() {
+        fetch(el.dataset.url, { headers: { 'Accept': 'application/json' } })
+          .then(function (r) { return r.json(); })
+          .then(function (d) {
+            var persen = d.total ? Math.round(d.hadir / d.total * 100) : 0;
+            el.querySelector('.jml').textContent = d.hadir + ' / ' + d.total;
+            el.querySelector('.persen').textContent = persen + '%';
+            el.querySelector('progress').value = persen;
+
+            var ul = el.querySelector('.daftar-hadir');
+            ul.innerHTML = '';
+            d.daftar.forEach(function (m) {
+              var li = document.createElement('li');
+              li.textContent = m.waktu + ' - ' + m.nama;
+              ul.appendChild(li);
+            });
+          });
+      }
+      muat();
+      setInterval(muat, 3000);
+    });
   </script>
 @endpush
