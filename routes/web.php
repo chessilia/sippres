@@ -19,6 +19,7 @@ use App\Http\Controllers\DataPenggunaController;
 use App\Http\Controllers\RekapStatistikController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfilController;
+use App\Http\Controllers\LupaPasswordController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -93,4 +94,9 @@ Route::middleware('auth')->group(function () {
 
     // pemantauan kehadiran real-time (dosen)
     Route::get('/dosen/presensi/{id}/hadir', [SesiPresensiController::class, 'daftarHadir'])->name('presensi.hadir');
+
+    Route::get('/lupa-password', [LupaPasswordController::class, 'tampilkanFormLupa'])->name('password.request');
+Route::post('/lupa-password', [LupaPasswordController::class, 'kirimTautan'])->name('password.email');
+Route::get('/reset-password/{token}', [LupaPasswordController::class, 'tampilkanFormReset'])->name('password.reset');
+Route::post('/reset-password', [LupaPasswordController::class, 'resetPassword'])->name('password.update');
 });

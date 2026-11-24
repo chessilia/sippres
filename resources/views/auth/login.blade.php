@@ -37,11 +37,10 @@
       </div>
       <div class="row">
         <label><input type="checkbox" name="remember"> Ingat Saya di Perangkat Ini</label>
-        <a href="#">Lupa Kata Sandi?</a>
+        <a href="{{ route('password.request') }}">Lupa Kata Sandi?</a>
       </div>
 
       <button type="submit" class="btn-primary">Masuk Portal SIPPRES</button>
-      <button type="button" class="btn-google">Masuk dengan Google Workspace Kampus</button>
     </form>
 
     <p>Belum punya akun? <a href="{{ route('registrasi') }}">Daftar Akun Baru</a></p>
