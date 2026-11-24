@@ -6,6 +6,7 @@ use App\Http\Controllers\LoginController;
 use App\Http\Controllers\DataPerkuliahanController;
 use App\Http\Controllers\JadwalController;
 use App\Http\Controllers\SesiPresensiController;
+use App\Http\Controllers\PresensiController;
 
 Route::view('/', 'landing')->name('landing');
 
@@ -28,4 +29,6 @@ Route::middleware('auth')->group(function () {
     Route::view('/dashboard/mahasiswa', 'dashboard.mahasiswa')->name('dashboard.mahasiswa');
     Route::view('/dashboard/dosen', 'dashboard.dosen')->name('dashboard.dosen');
     Route::view('/dashboard/admin', 'dashboard.admin')->name('dashboard.admin');
+    Route::get('/mahasiswa/presensi', [PresensiController::class, 'index'])->name('presensi.mahasiswa');
+    Route::post('/mahasiswa/presensi', [PresensiController::class, 'kirimPresensi'])->name('presensi.kirim');
 });

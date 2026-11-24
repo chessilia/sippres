@@ -45,7 +45,7 @@
     @elseif (Auth::user()->role === 'Mahasiswa')
       <a href="{{ route('dashboard.mahasiswa') }}">Dashboard</a>
       <a href="{{ route('jadwal') }}">Jadwal Kuliah</a>
-      <a href="#">Presensi</a>
+      <a href="{{ route('presensi.mahasiswa') }}">Presensi</a>
       <a href="#">Pengajuan Izin</a>
       <a href="#">Riwayat</a>
       <a href="#">Notifikasi</a>

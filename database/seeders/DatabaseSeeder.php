@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Perkuliahan;
 use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class DatabaseSeeder extends Seeder
 {
@@ -44,5 +45,25 @@ class DatabaseSeeder extends Seeder
             'jamSelesai' => '15:30',
             'ruang'      => 'F3.11',
         ]);
+
+        // tiga akun Mahasiswa contoh
+        foreach ([1 => 'Kiel', 2 => 'Rani', 3 => 'Dito'] as $no => $nama) {
+            User::firstOrCreate(['email' => "mhs{$no}@sippres.test"], [
+                'username' => "mhs{$no}",
+                'nama'     => $nama,
+                'password' => 'password123',
+                'role'     => 'Mahasiswa',
+            ]);
+        }
+
+        // data uji: semua mahasiswa diikutkan ke semua perkuliahan
+        foreach (User::where('role', 'Mahasiswa')->get() as $mhs) {
+            foreach (Perkuliahan::all() as $kuliah) {
+                DB::table('peserta_kuliah')->insertOrIgnore([
+                    'idMahasiswa'   => $mhs->idUser,
+                    'idPerkuliahan' => $kuliah->idPerkuliahan,
+                ]);
+            }
+        }
     }
 }

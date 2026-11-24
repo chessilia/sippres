@@ -21,4 +21,16 @@ class SesiPresensi extends Model
     {
         return $this->belongsTo(Perkuliahan::class, 'idPerkuliahan', 'idPerkuliahan');
     }
+
+        // waktu sesi berakhir = waktu mulai + durasi
+    public function waktuBerakhir()
+    {
+        return $this->waktuMulai->copy()->addMinutes($this->durasi);
+    }
+
+    // sesi masih bisa dipakai presensi?
+    public function masihBerlaku(): bool
+    {
+        return $this->status === 'Aktif' && now()->lessThan($this->waktuBerakhir());
+    }
 }
