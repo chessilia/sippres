@@ -11,18 +11,29 @@ class SesiPresensi extends Model
     public    $timestamps = false;
 
     protected $fillable = [
-        'idPerkuliahan', 'kodeQR', 'waktuMulai', 'durasi',
-        'status', 'latitude', 'longitude', 'radius',
+        'idPerkuliahan',
+        'kodeQR',
+        'tanggal',
+        'waktuMulai',
+        'durasi',
+        'status',
+        'latitude',
+        'longitude',
+        'radius',
+        'catatan',
     ];
 
-    protected $casts = ['waktuMulai' => 'datetime'];
+    protected $casts = [
+        'tanggal'    => 'date',
+        'waktuMulai' => 'datetime',
+    ];
 
     public function perkuliahan()
     {
         return $this->belongsTo(Perkuliahan::class, 'idPerkuliahan', 'idPerkuliahan');
     }
 
-        // waktu sesi berakhir = waktu mulai + durasi
+    // waktu sesi berakhir = waktu mulai + durasi
     public function waktuBerakhir()
     {
         return $this->waktuMulai->copy()->addMinutes($this->durasi);

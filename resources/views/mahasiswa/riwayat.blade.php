@@ -10,12 +10,20 @@
     font-size: 14.5px;
   }
 
-  /* Filter Tabs */
+  /* Baris Tab & Filter Mata Kuliah */
+  .riwayat-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+    border-bottom: 2px solid var(--border);
+  }
   .riwayat-tabs {
     display: flex;
     flex-wrap: wrap;
     gap: 6px;
-    border-bottom: 2px solid var(--border);
+    margin-bottom: -2px;
   }
   .riwayat-tabs .tab {
     margin-right: 0;
@@ -25,6 +33,32 @@
     display: inline-flex;
     align-items: center;
     gap: 7px;
+  }
+  .matkul-filter-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+  .matkul-filter-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--text-secondary);
+    white-space: nowrap;
+  }
+  .matkul-filter-select {
+    min-width: 240px;
+    max-width: 320px;
+    padding: 7px 12px;
+    font-size: 13.5px;
+    font-weight: 600;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: #ffffff;
+    color: var(--text-main);
   }
   .riwayat-card {
     margin-top: 0;
@@ -130,18 +164,56 @@
       position: static;
     }
   }
+  @media (max-width: 680px) {
+    .matkul-filter-form {
+      width: 100%;
+    }
+    .matkul-filter-select {
+      flex: 1;
+      max-width: none;
+    }
+  }
 </style>
+
+  @php
+    $matkulParam = !empty($filterMatkul) ? ['matkul' => $filterMatkul->idPerkuliahan] : [];
+  @endphp
 
   <p class="page-subtitle">Catatan lengkap riwayat presensi perkuliahan dan status pengajuan izin ketidakhadiran Anda.</p>
 
-  {{-- Tab Jenis Riwayat --}}
-  <div class="riwayat-tabs">
-    <a class="tab {{ $jenis == 'presensi' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'presensi']) }}">
-      <i data-lucide="check-square" style="width:15px;height:15px"></i> Presensi
-    </a>
-    <a class="tab {{ $jenis == 'izin' ? 'aktif' : '' }}" href="{{ route('riwayat', ['jenis' => 'izin']) }}">
-      <i data-lucide="file-text" style="width:15px;height:15px"></i> Pengajuan Izin
-    </a>
+  {{-- Toolbar: Tab Jenis Riwayat & Filter Mata Kuliah --}}
+  <div class="riwayat-toolbar">
+    <div class="riwayat-tabs">
+      <a class="tab {{ $jenis == 'presensi' ? 'aktif' : '' }}"
+         href="{{ route('riwayat', array_merge(['jenis' => 'presensi'], $matkulParam)) }}">
+        <i data-lucide="check-square" style="width:15px;height:15px"></i> Presensi
+      </a>
+      <a class="tab {{ $jenis == 'izin' ? 'aktif' : '' }}"
+         href="{{ route('riwayat', array_merge(['jenis' => 'izin'], $matkulParam)) }}">
+        <i data-lucide="file-text" style="width:15px;height:15px"></i> Pengajuan Izin
+      </a>
+    </div>
+
+    <form method="GET" action="{{ route('riwayat') }}" class="matkul-filter-form">
+      <input type="hidden" name="jenis" value="{{ $jenis }}">
+      <label for="filterMatkul" class="matkul-filter-label">
+        <i data-lucide="filter" style="width:14px;height:14px;color:var(--primary)"></i> Mata Kuliah:
+      </label>
+      <select name="matkul" id="filterMatkul" class="matkul-filter-select" onchange="this.form.submit()">
+        <option value="">Semua Mata Kuliah</option>
+        @foreach ($daftarMatkul as $mk)
+          <option value="{{ $mk->idPerkuliahan }}" @selected(!empty($filterMatkul) && $filterMatkul->idPerkuliahan == $mk->idPerkuliahan)>
+            {{ $mk->namaMatkul }} (Kelas {{ $mk->kelas }})
+          </option>
+        @endforeach
+      </select>
+      @if (!empty($filterMatkul))
+        <a href="{{ route('riwayat', ['jenis' => $jenis]) }}"
+           class="btn btn-batal" style="padding:7px 11px; font-size:12.5px" title="Reset Filter">
+          Reset
+        </a>
+      @endif
+    </form>
   </div>
 
   <div class="riwayat-layout {{ $detail ? 'has-detail' : '' }}">
@@ -149,7 +221,11 @@
     <div class="card riwayat-card">
       @if ($daftar->isEmpty())
         <div class="empty-box">
-          {{ $jenis == 'presensi' ? 'Riwayat presensi belum tersedia.' : 'Riwayat pengajuan izin belum tersedia.' }}
+          @if (!empty($filterMatkul))
+            {{ $jenis == 'presensi' ? 'Belum ada riwayat presensi untuk mata kuliah ' . $filterMatkul->namaMatkul . '.' : 'Belum ada riwayat pengajuan izin untuk mata kuliah ' . $filterMatkul->namaMatkul . '.' }}
+          @else
+            {{ $jenis == 'presensi' ? 'Riwayat presensi belum tersedia.' : 'Riwayat pengajuan izin belum tersedia.' }}
+          @endif
         </div>
       @elseif ($jenis == 'presensi')
         <table>
@@ -177,7 +253,7 @@
                 <td style="text-align:right">
                   <a class="btn {{ $detail && $detail->idPresensi == $p->idPresensi ? 'btn-primary' : 'btn-batal' }}"
                      style="padding:5px 11px; font-size:12.5px"
-                     href="{{ route('riwayat', ['jenis' => 'presensi', 'id' => $p->idPresensi]) }}">
+                     href="{{ route('riwayat', array_merge(['jenis' => 'presensi', 'id' => $p->idPresensi], $matkulParam)) }}">
                     Detail
                   </a>
                 </td>
@@ -211,7 +287,7 @@
                 <td style="text-align:right">
                   <a class="btn {{ $detail && $detail->idIzin == $z->idIzin ? 'btn-primary' : 'btn-batal' }}"
                      style="padding:5px 11px; font-size:12.5px"
-                     href="{{ route('riwayat', ['jenis' => 'izin', 'id' => $z->idIzin]) }}">
+                     href="{{ route('riwayat', array_merge(['jenis' => 'izin', 'id' => $z->idIzin], $matkulParam)) }}">
                     Detail
                   </a>
                 </td>
@@ -227,7 +303,8 @@
       <div class="card detail-card">
         <div class="detail-header">
           <h3>{{ $jenis == 'presensi' ? 'Detail Presensi' : 'Detail Pengajuan Izin' }}</h3>
-          <a href="{{ route('riwayat', ['jenis' => $jenis]) }}" class="btn btn-batal" style="padding:5px 10px; font-size:12.5px">
+          <a href="{{ route('riwayat', array_merge(['jenis' => $jenis], $matkulParam)) }}"
+             class="btn btn-batal" style="padding:5px 10px; font-size:12.5px">
             <i data-lucide="x" style="width:14px;height:14px"></i> Tutup
           </a>
         </div>

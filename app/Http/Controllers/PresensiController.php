@@ -33,14 +33,20 @@ class PresensiController extends Controller
                   ->where('idMahasiswa', $idMahasiswa)->pluck('idPerkuliahan');
 
         $sudah = DB::table('presensi')
-                   ->where('idMahasiswa', $idMahasiswa)->pluck('idSesi');
+                   ->where('idMahasiswa', $idMahasiswa)
+                   ->get()
+                   ->keyBy('idSesi');
 
         return SesiPresensi::with('perkuliahan')
             ->where('status', 'Aktif')
             ->whereIn('idPerkuliahan', $ikut)
             ->get()
-            ->filter(fn ($sesi) => $sesi->masihBerlaku())
-            ->each(fn ($sesi) => $sesi->sudahPresensi = $sudah->contains($sesi->idSesi))
+            ->filter(fn ($sesi) =>$sesi->masihBerlaku())
+            ->each(function ($sesi) use ($sudah) {$rekam = $sudah->get($sesi->idSesi);
+                $sesi->sudahPresensi  = (bool)$rekam;
+                $sesi->waktuPresensi  = $rekam ? $rekam->waktu : null;
+                $sesi->statusPresensi = $rekam ? $rekam->status : null;
+            })
             ->values();
     }
 
@@ -57,12 +63,11 @@ class PresensiController extends Controller
         ]);
 
         $idMahasiswa = Auth::id();
-        $sesi = SesiPresensi::find($request->idSesi);
+        $sesi = SesiPresensi::with('perkuliahan')->find($request->idSesi);
 
         // 1. periksa status sesi presensi
         if (!$sesi || !$sesi->masihBerlaku()) {
-            if ($sesi && $sesi->status === 'Aktif') {
-                $sesi->update(['status' => 'Selesai']);   // sudah lewat durasi
+            if ($sesi && $sesi->status === 'Aktif') {$sesi->update(['status' => 'Selesai']);
             }
             return back()->with('error', 'Sesi presensi tidak dapat digunakan');
         }
@@ -76,12 +81,12 @@ class PresensiController extends Controller
         }
 
         // 3. kode QR harus cocok
-        if (trim($request->kodeQR) !== $sesi->kodeQR) {
+        if (trim($request->kodeQR) !==$sesi->kodeQR) {
             return back()->with('error', 'QR Code tidak valid');
         }
 
         // 4. tolak presensi ganda pada sesi yang sama
-        $sudah = Presensi::where('idMahasiswa', $idMahasiswa)
+        $sudah = Presensi::where('idMahasiswa',$idMahasiswa)
                          ->where('idSesi', $sesi->idSesi)->exists();
         if ($sudah) {
             return back()->with('error', 'Anda sudah melakukan presensi pada sesi ini');
@@ -89,8 +94,7 @@ class PresensiController extends Controller
 
         // 5. validasi lokasi (hanya jika dosen mengaktifkan radius)
         $lokasi = null;
-        if ($request->filled(['latitude', 'longitude'])) {
-            $lokasi = round($request->latitude, 6) . ',' . round($request->longitude, 6);
+        if ($request->filled(['latitude', 'longitude'])) {$lokasi = round($request->latitude, 6) . ',' . round($request->longitude, 6);
         }
 
         if ($sesi->radius > 0) {
@@ -98,14 +102,14 @@ class PresensiController extends Controller
                 return back()->with('error', 'Lokasi tidak terdeteksi. Izinkan akses lokasi di browser.');
             }
 
-            $jarak = $this->hitungJarakMeter(
-                $sesi->latitude, $sesi->longitude,
-                $request->latitude, $request->longitude
+            $jarak =$this->hitungJarakMeter(
+                $sesi->latitude,$sesi->longitude,
+                $request->latitude,$request->longitude
             );
 
-            if ($jarak > $sesi->radius) {
+            if ($jarak >$sesi->radius) {
                 return back()->with('error',
-                    'Anda berada di luar radius kelas (' . round($jarak) . ' m dari kelas, batas ' . $sesi->radius . ' m)');
+                    'Anda berada di luar radius kelas (' . round($jarak) . ' m dari kelas, batas ' .$sesi->radius . ' m)');
             }
         }
 
@@ -119,11 +123,12 @@ class PresensiController extends Controller
         ]);
 
         // notifikasi: presensi berhasil dicatat (SR-21)
+        $tglKuliah = ($sesi->tanggal ?? $sesi->waktuMulai)->locale('id')->translatedFormat('l, d M Y');
+
         DB::table('notifikasi')->insert([
             'idPenerima' => $idMahasiswa,
             'jenis'      => 'Presensi',
-            'isi'        => 'Presensi ' . $sesi->perkuliahan->namaMatkul
-                          . ' berhasil dicatat pukul ' . now()->format('H:i'),
+            'isi'        => "Presensi {$sesi->perkuliahan->namaMatkul} kelas {$sesi->perkuliahan->kelas} ({$tglKuliah}) berhasil dicatat pukul " . now()->format('H:i') . ' WIB.',
             'waktu'      => now(),
             'statusBaca' => false,
         ]);
@@ -132,13 +137,11 @@ class PresensiController extends Controller
     }
 
     // jarak dua titik koordinat dalam meter (rumus haversine)
-    private function hitungJarakMeter($lat1, $lon1, $lat2, $lon2): float
+    private function hitungJarakMeter($lat1,$lon1, $lat2,$lon2): float
     {
         $r    = 6371000;
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
-        $a = sin($dLat / 2) ** 2
-           + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
+        $dLat = deg2rad($lat2 -$lat1);
+        $dLon = deg2rad($lon2 - $lon1);$a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLon / 2) ** 2;
 
         return 2 * $r * asin(sqrt($a));
     }

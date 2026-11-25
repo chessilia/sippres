@@ -90,11 +90,24 @@
       background: #fde68a;
       color: #78350f;
     }
+
+    /* Daftar Peserta Terdaftar */
+    .peserta-header-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
     .peserta-list {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      margin: 12px 0 20px;
+      max-height: 260px;
+      overflow-y: auto;
+      padding-right: 4px;
+      margin: 10px 0 20px;
     }
     .peserta-item {
       display: flex;
@@ -105,28 +118,124 @@
       border: 1px solid var(--border);
       border-radius: 9px;
     }
+
+    /* Tambah Mahasiswa Skala Fakultas */
+    .tambah-mhs-box {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+      margin-top: 12px;
+    }
+    .mode-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .mode-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: #fff;
+      color: var(--text-secondary);
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .mode-tab-btn.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #fff;
+    }
+    .calon-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+    .calon-search {
+      position: relative;
+      flex: 1;
+      min-width: 240px;
+    }
+    .calon-search svg {
+      position: absolute;
+      left: 11px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 15px;
+      height: 15px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+    .calon-search input {
+      padding-left: 34px;
+      background: #fff;
+    }
+    .calon-bulk-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
     .calon-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
-      gap: 10px;
-      margin: 10px 0 16px;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+      padding: 4px 2px;
+      margin-bottom: 14px;
     }
     .calon-item {
       display: flex;
       align-items: center;
       gap: 9px;
-      padding: 10px 12px;
+      padding: 9px 12px;
       border: 1px solid var(--border);
       border-radius: 8px;
       background: #fff;
       cursor: pointer;
       font-weight: 600 !important;
       margin: 0 !important;
+      transition: all 0.12s ease;
     }
     .calon-item:hover {
       border-color: #93c5fd;
-      background: var(--bg-subtle);
+      background: #eff6ff;
     }
+    .calon-item.checked {
+      border-color: var(--primary);
+      background: #eff6ff;
+    }
+    .calon-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border);
+    }
+    .selected-counter {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--primary-hover);
+    }
+    .paste-result {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -266,11 +375,20 @@
         <i data-lucide="users" style="width:19px;height:19px;vertical-align:-3px;color:var(--primary);margin-right:6px"></i>
         Peserta Kuliah: {{ $kelola->namaMatkul }} (Kelas {{ $kelola->kelas }})
       </h3>
-      <p style="margin-top:0; color:var(--text-secondary)">Total <strong>{{ $peserta->count() }}</strong> mahasiswa terdaftar pada kelas ini.</p>
 
-      <div class="peserta-list">
+      <div class="peserta-header-bar">
+        <p style="margin:0; color:var(--text-secondary)">Total <strong>{{ $peserta->count() }}</strong> mahasiswa terdaftar pada kelas ini.</p>
+        @if ($peserta->count() > 5)
+          <div class="search-box" style="max-width:260px">
+            <i data-lucide="search"></i>
+            <input type="text" id="filterPesertaTerdaftar" placeholder="Cari peserta terdaftar...">
+          </div>
+        @endif
+      </div>
+
+      <div class="peserta-list" id="listPesertaTerdaftar">
         @forelse ($peserta as $m)
-          <div class="peserta-item">
+          <div class="peserta-item" data-search="{{ strtolower($m->nama . ' ' . $m->username) }}">
             <div>
               <strong>{{ $m->nama }}</strong>
               <span style="color:var(--text-muted); font-size:13.5px; margin-left:6px">({{ $m->username }})</span>
@@ -288,24 +406,81 @@
         @endforelse
       </div>
 
-      <h4 style="padding-top:14px; border-top:1px solid var(--border)">Tambahkan Mahasiswa ke Kelas</h4>
+      <h4 style="padding-top:14px; border-top:1px solid var(--border); margin-bottom:6px">Tambahkan Mahasiswa ke Kelas</h4>
       @if ($calon->isEmpty())
         <p style="color:var(--text-muted); font-size:14px">Semua mahasiswa sudah terdaftar pada perkuliahan ini.</p>
       @else
-        <form method="POST" action="{{ route('peserta.tambah', $kelola->idPerkuliahan) }}">
-          @csrf
-          <div class="calon-grid">
-            @foreach ($calon as $m)
-              <label class="calon-item">
-                <input type="checkbox" name="mahasiswa[]" value="{{ $m->idUser }}" style="width:16px;height:16px;accent-color:var(--primary)">
-                <span>{{ $m->nama }} <small style="color:var(--text-muted)">({{ $m->username }})</small></span>
-              </label>
-            @endforeach
+        <div class="tambah-mhs-box">
+          {{-- Mode Tab: Cari & Centang vs Paste Daftar Username/NIM --}}
+          <div class="mode-tabs">
+            <button type="button" class="mode-tab-btn active" data-mode="daftar">
+              <i data-lucide="list-checks" style="width:15px;height:15px"></i> Cari &amp; Pilih dari Daftar ({{ $calon->count() }})
+            </button>
+            <button type="button" class="mode-tab-btn" data-mode="paste">
+              <i data-lucide="clipboard-paste" style="width:15px;height:15px"></i> Tempel Daftar Username / NIM
+            </button>
           </div>
-          <button type="submit" class="btn-primary btn-sm">
-            <i data-lucide="user-plus" style="width:15px;height:15px"></i> Tambahkan yang Dipilih
-          </button>
-        </form>
+
+          {{-- Panel Mode Tempel Daftar (Bulk Paste dari Excel/KRS) --}}
+          <div id="panelModePaste" style="display:none; margin-bottom:14px">
+            <label for="bulkUsernameInput" style="font-size:13px; color:var(--text-secondary)">
+              Tempel daftar username/NIM mahasiswa (pisahkan dengan baris baru, koma, atau spasi):
+            </label>
+            <textarea id="bulkUsernameInput" rows="3" style="background:#fff; margin-top:4px"
+                      placeholder="Contoh:&#10;mhs1&#10;mhs2&#10;235150400111001"></textarea>
+            <div style="display:flex; align-items:center; gap:10px; margin-top:8px; flex-wrap:wrap">
+              <button type="button" class="btn-batal btn-sm" id="btnCocokkanUsername">
+                <i data-lucide="check-square" style="width:14px;height:14px"></i> Cocokkan &amp; Centang Otomatis
+              </button>
+              <span id="pasteResultInfo" class="paste-result"></span>
+            </div>
+          </div>
+
+          <form method="POST" action="{{ route('peserta.tambah', $kelola->idPerkuliahan) }}" id="formTambahPeserta">
+            @csrf
+
+            {{-- Toolbar Cari & Pilih Semua --}}
+            <div class="calon-toolbar">
+              <div class="calon-search">
+                <i data-lucide="search"></i>
+                <input type="text" id="cariCalonInput" placeholder="Ketik nama atau username/NIM untuk menyaring...">
+              </div>
+
+              <div class="calon-bulk-actions">
+                <button type="button" class="btn-batal btn-sm" id="btnPilihSemuaTampil">
+                  <i data-lucide="check-check" style="width:14px;height:14px"></i> Pilih Semua yang Tampil
+                </button>
+                <button type="button" class="btn-batal btn-sm" id="btnResetPilihan">
+                  Batal Pilih
+                </button>
+              </div>
+            </div>
+
+            {{-- Grid Scrollable Calon Mahasiswa --}}
+            <div class="calon-grid" id="calonGrid">
+              @foreach ($calon as $m)
+                <label class="calon-item"
+                       data-search="{{ strtolower($m->nama . ' ' . $m->username) }}"
+                       data-username="{{ strtolower(trim($m->username)) }}">
+                  <input type="checkbox" class="cb-calon" name="mahasiswa[]" value="{{ $m->idUser }}"
+                         style="width:16px;height:16px;accent-color:var(--primary)">
+                  <span>{{ $m->nama }} <small style="color:var(--text-muted)">({{ $m->username }})</small></span>
+                </label>
+              @endforeach
+            </div>
+
+            <div id="calonEmptySearch" style="display:none; text-align:center; padding:18px; color:var(--text-muted); font-size:13.5px">
+              Tidak ada mahasiswa yang cocok dengan kata kunci pencarian.
+            </div>
+
+            <div class="calon-footer">
+              <span class="selected-counter" id="selectedCounterText">0 mahasiswa dipilih</span>
+              <button type="submit" class="btn-primary btn-sm" id="btnSubmitPeserta" disabled>
+                <i data-lucide="user-plus" style="width:15px;height:15px"></i> Tambahkan yang Dipilih
+              </button>
+            </div>
+          </form>
+        </div>
       @endif
 
       <div class="form-actions">
@@ -402,4 +577,134 @@
       </tbody>
     </table>
   </div>
+
+  @if ($kelola)
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+        // 1. Filter peserta yang sudah terdaftar
+        const filterTerdaftar = document.getElementById('filterPesertaTerdaftar');
+        if (filterTerdaftar) {
+          filterTerdaftar.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            document.querySelectorAll('#listPesertaTerdaftar .peserta-item').forEach(function (item) {
+              item.style.display = item.dataset.search.includes(q) ? '' : 'none';
+            });
+          });
+        }
+
+        // 2. Pengelolaan Calon Mahasiswa (Live Search, Select All, Counter, Bulk Paste)
+        const cariCalonInput   = document.getElementById('cariCalonInput');
+        const calonItems       = Array.from(document.querySelectorAll('#calonGrid .calon-item'));
+        const emptySearchMsg   = document.getElementById('calonEmptySearch');
+        const counterText      = document.getElementById('selectedCounterText');
+        const btnSubmit        = document.getElementById('btnSubmitPeserta');
+        const btnPilihSemua    = document.getElementById('btnPilihSemuaTampil');
+        const btnResetPilihan  = document.getElementById('btnResetPilihan');
+
+        function perbaruiCounter() {
+          let totalDipilih = 0;
+          calonItems.forEach(function (item) {
+            const cb = item.querySelector('.cb-calon');
+            if (cb.checked) {
+              totalDipilih++;
+              item.classList.add('checked');
+            } else {
+              item.classList.remove('checked');
+            }
+          });
+          counterText.textContent = totalDipilih + ' mahasiswa dipilih';
+          btnSubmit.disabled = totalDipilih === 0;
+        }
+
+        calonItems.forEach(function (item) {
+          item.querySelector('.cb-calon').addEventListener('change', perbaruiCounter);
+        });
+
+        if (cariCalonInput) {
+          cariCalonInput.addEventListener('input', function () {
+            const q = this.value.toLowerCase().trim();
+            let tampil = 0;
+            calonItems.forEach(function (item) {
+              const cocok = item.dataset.search.includes(q);
+              item.style.display = cocok ? '' : 'none';
+              if (cocok) tampil++;
+            });
+            emptySearchMsg.style.display = tampil === 0 ? 'block' : 'none';
+          });
+        }
+
+        if (btnPilihSemua) {
+          btnPilihSemua.addEventListener('click', function () {
+            calonItems.forEach(function (item) {
+              if (item.style.display !== 'none') {
+                item.querySelector('.cb-calon').checked = true;
+              }
+            });
+            perbaruiCounter();
+          });
+        }
+
+        if (btnResetPilihan) {
+          btnResetPilihan.addEventListener('click', function () {
+            calonItems.forEach(function (item) {
+              item.querySelector('.cb-calon').checked = false;
+            });
+            perbaruiCounter();
+          });
+        }
+
+        // 3. Switch Mode Tab (Daftar vs Paste Username)
+        const modeBtns       = document.querySelectorAll('.mode-tab-btn');
+        const panelModePaste = document.getElementById('panelModePaste');
+
+        modeBtns.forEach(function (btn) {
+          btn.addEventListener('click', function () {
+            modeBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            panelModePaste.style.display = this.dataset.mode === 'paste' ? 'block' : 'none';
+          });
+        });
+
+        // 4. Cocokkan & Centang Otomatis dari Paste Username / NIM
+        const btnCocokkan     = document.getElementById('btnCocokkanUsername');
+        const bulkInput       = document.getElementById('bulkUsernameInput');
+        const pasteResultInfo = document.getElementById('pasteResultInfo');
+
+        if (btnCocokkan && bulkInput) {
+          btnCocokkan.addEventListener('click', function () {
+            const tokens = bulkInput.value
+              .split(/[\s,;|\n\r\t]+/)
+              .map(s => s.trim().toLowerCase())
+              .filter(Boolean);
+
+            if (tokens.length === 0) {
+              pasteResultInfo.style.color = '#b91c1c';
+              pasteResultInfo.textContent = 'Masukkan minimal satu username/NIM terlebih dahulu.';
+              return;
+            }
+
+            const tokenSet = new Set(tokens);
+            let ditemukan = 0;
+
+            calonItems.forEach(function (item) {
+              if (tokenSet.has(item.dataset.username)) {
+                item.querySelector('.cb-calon').checked = true;
+                ditemukan++;
+              }
+            });
+
+            perbaruiCounter();
+
+            if (ditemukan > 0) {
+              pasteResultInfo.style.color = '#15803d';
+              pasteResultInfo.textContent = ditemukan + ' mahasiswa berhasil dicocokkan & dicentang. Klik "Tambahkan yang Dipilih" untuk menyimpan.';
+            } else {
+              pasteResultInfo.style.color = '#b91c1c';
+              pasteResultInfo.textContent = 'Tidak ada username/NIM yang cocok (atau sudah terdaftar di kelas ini).';
+            }
+          });
+        }
+      });
+    </script>
+  @endif
 @endsection

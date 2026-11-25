@@ -26,6 +26,18 @@ class NotifikasiController extends Controller
         ]);
     }
 
+    // Tandai seluruh notifikasi milik pengguna yang login menjadi sudah dibaca
+    public function bacaSemua()
+    {
+        abort_unless(in_array(Auth::user()->role, ['Mahasiswa', 'Dosen']), 403);
+
+        Notifikasi::where('idPenerima', Auth::id())
+            ->where('statusBaca', false)
+            ->update(['statusBaca' => true]);
+
+        return back()->with('success', 'Semua notifikasi telah ditandai sudah dibaca');
+    }
+
     // getDetailNotifikasi(idNotifikasi): hanya milik pengguna yang login
     private function getDetailNotifikasi($id, $daftar)
     {

@@ -187,7 +187,14 @@
               </td>
               <td>{{ $l->kategori }}</td>
               <td style="white-space:nowrap">{{ $l->tanggalLapor->format('d/m/Y') }}</td>
-              <td>{{ \Illuminate\Support\Str::limit($l->deskripsi, 55) }}</td>
+              <td>
+                {{ \Illuminate\Support\Str::limit($l->deskripsi, 55) }}
+                @if ($l->foto)
+                  <span class="badge st-Izin" style="font-size:11px; padding:1px 6px; margin-left:4px">
+                    <i data-lucide="image" style="width:11px;height:11px"></i> Foto
+                  </span>
+                @endif
+              </td>
               <td><span class="badge st-{{ $l->kelas_status }}">{{ $l->label_status }}</span></td>
               <td style="text-align:right; white-space:nowrap">
                 <a class="btn {{ $detail && $detail->idLaporan == $l->idLaporan ? 'btn-primary' : 'btn-batal' }}"
@@ -224,6 +231,16 @@
           <span class="info-box-label">Kategori &amp; Deskripsi Kendala</span>
           <div style="margin-bottom:8px"><span class="badge st-Izin">{{ $detail->kategori }}</span></div>
           <div style="color:var(--text-main)">{{ $detail->deskripsi }}</div>
+
+          @if ($detail->foto)
+            <div style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border)">
+              <span class="info-box-label" style="margin-bottom:6px">Lampiran Foto Bukti</span>
+              <a href="{{ asset('storage/' . $detail->foto) }}" target="_blank" title="Klik untuk melihat ukuran penuh">
+                <img src="{{ asset('storage/' . $detail->foto) }}" alt="Lampiran Kendala"
+                     style="max-width:100%; max-height:260px; border-radius:8px; border:1px solid var(--border); display:block">
+              </a>
+            </div>
+          @endif
         </div>
 
         <div class="info-box" style="margin-bottom:0">

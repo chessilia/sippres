@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Perkuliahan;
 use App\Models\SesiPresensi;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -19,7 +20,7 @@ class SesiPresensiController extends Controller
     }
 
     // kirim notifikasi ke seluruh peserta kuliah saat sesi ditutup (manual maupun otomatis)
-    private function kirimNotifTutupSesi(SesiPresensi $sesi, bool $otomatis = false): void
+    private function kirimNotifTutupSesi(SesiPresensi $sesi, bool$otomatis = false): void
     {
         $sesi->loadMissing('perkuliahan');
 
@@ -36,17 +37,17 @@ class SesiPresensiController extends Controller
             ->pluck('status', 'idMahasiswa');
 
         $sekarang   = now();
-        $namaMatkul = $sesi->perkuliahan->namaMatkul;
-        $kelas      = $sesi->perkuliahan->kelas;
-        $keterangan = $otomatis ? 'telah berakhir otomatis' : 'telah ditutup oleh dosen';
+        $namaMatkul =$sesi->perkuliahan->namaMatkul;
+        $kelas      =$sesi->perkuliahan->kelas;
+        $tglKuliah  = ($sesi->tanggal ?? $sesi->waktuMulai)->locale('id')->translatedFormat('l, d M Y');
+        $keterangan =$otomatis ? 'telah berakhir otomatis' : 'telah ditutup oleh dosen';
 
-        $notifikasi = $penerima->map(function ($idMhs) use ($sudahPresensi, $namaMatkul, $kelas, $keterangan, $sekarang) {
-            $statusAkhir = $sudahPresensi[$idMhs] ?? 'Alpa';
+        $notifikasi = $penerima->map(function ($idMhs) use ($sudahPresensi, $namaMatkul,$kelas, $tglKuliah,$keterangan, $sekarang) {$statusAkhir = $sudahPresensi[$idMhs] ?? 'Alpa';
 
             return [
                 'idPenerima' => $idMhs,
                 'jenis'      => 'Presensi',
-                'isi'        => "Sesi presensi {$namaMatkul} kelas {$kelas} {$keterangan}. Status akhir kamu: {$statusAkhir}.",
+                'isi'        => "Sesi presensi {$namaMatkul} kelas {$kelas} ({$tglKuliah}) {$keterangan}. Status akhir kamu: {$statusAkhir}.",
                 'waktu'      => $sekarang,
                 'statusBaca' => false,
             ];
@@ -58,10 +59,8 @@ class SesiPresensiController extends Controller
     // sesi yang sudah melewati durasinya otomatis menjadi "Selesai"
     private function tutupOtomatis(): void
     {
-        SesiPresensi::with('perkuliahan')->where('status', 'Aktif')->get()->each(function ($sesi) {
-            $berakhir = $sesi->waktuMulai->copy()->addMinutes($sesi->durasi);
-            if (now()->greaterThanOrEqualTo($berakhir)) {
-                $sesi->update(['status' => 'Selesai']);
+        SesiPresensi::with('perkuliahan')->where('status', 'Aktif')->get()->each(function ($sesi) {$berakhir = $sesi->waktuMulai->copy()->addMinutes($sesi->durasi);
+            if (now()->greaterThanOrEqualTo($berakhir)) {$sesi->update(['status' => 'Selesai']);
                 $this->kirimNotifTutupSesi($sesi, true);
             }
         });
@@ -70,25 +69,31 @@ class SesiPresensiController extends Controller
     // getDaftarPerkuliahan(idDosen) -> UI-014
     public function getDaftarPerkuliahan()
     {
-        $this->cekDosen();
-        $this->tutupOtomatis();
+        $this->cekDosen();$this->tutupOtomatis();
 
         $idDosen = Auth::id();
 
+        $daftar = Perkuliahan::where('idDosen',$idDosen)
+            ->orderBy('idPerkuliahan')
+            ->get()
+            ->each(function ($p) {
+                $jumlahSesi = SesiPresensi::where('idPerkuliahan',$p->idPerkuliahan)->count();
+                $p->pertemuanBerikutnya = min(16,$jumlahSesi + 1);
+            });
+
         $riwayatSesi = SesiPresensi::with('perkuliahan')
             ->where('status', 'Selesai')
-            ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen', $idDosen))
+            ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen',$idDosen))
+            ->orderByDesc('tanggal')
             ->orderByDesc('waktuMulai')
             ->limit(15)
             ->get()
-            ->each(function ($sesi) {
-                $sesi->hadir = DB::table('presensi')->where('idSesi', $sesi->idSesi)->count();
-                $sesi->total = DB::table('peserta_kuliah')
+            ->each(function ($sesi) {$sesi->hadir = DB::table('presensi')->where('idSesi', $sesi->idSesi)->where('status', 'Hadir')->count();$sesi->total = DB::table('peserta_kuliah')
                                  ->where('idPerkuliahan', $sesi->idPerkuliahan)->count();
             });
 
         return view('dosen.presensi', [
-            'daftar'      => Perkuliahan::where('idDosen', $idDosen)->orderBy('idPerkuliahan')->get(),
+            'daftar'      => $daftar,
             'sesiAktif'   => $this->getSesiAktif($idDosen),
             'riwayatSesi' => $riwayatSesi,
         ]);
@@ -99,12 +104,9 @@ class SesiPresensiController extends Controller
     {
         return SesiPresensi::with('perkuliahan')
             ->where('status', 'Aktif')
-            ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen', $idDosen))
+            ->whereHas('perkuliahan', fn ($q) => $q->where('idDosen',$idDosen))
             ->get()
-            ->each(function ($sesi) {
-                // jumlah mahasiswa yang sudah presensi dibanding total peserta
-                $sesi->hadir = DB::table('presensi')->where('idSesi', $sesi->idSesi)->count();
-                $sesi->total = DB::table('peserta_kuliah')
+            ->each(function ($sesi) {$sesi->hadir = DB::table('presensi')->where('idSesi', $sesi->idSesi)->where('status', 'Hadir')->count();$sesi->total = DB::table('peserta_kuliah')
                                  ->where('idPerkuliahan', $sesi->idPerkuliahan)->count();
             });
     }
@@ -112,14 +114,16 @@ class SesiPresensiController extends Controller
     // buatSesi(idPerkuliahan, durasi) -> PSD-007
     public function buatSesi(Request $request)
     {
-        $this->cekDosen();
-        $this->tutupOtomatis();
+        $this->cekDosen();$this->tutupOtomatis();
 
         $request->validate([
             'idPerkuliahan' => ['required',
                 Rule::exists('perkuliahan', 'idPerkuliahan')->where('idDosen', Auth::id())],
+            'pertemuan' => 'required|integer|min:1|max:16',
+            'tanggal'   => 'required|date',
             'durasi'    => 'required|in:10,15,30,60',
             'radius'    => 'required|integer|min:0|max:1000',
+            'catatan'   => 'nullable|string|max:450',
             'latitude'  => 'nullable|numeric|between:-90,90',
             'longitude' => 'nullable|numeric|between:-180,180',
         ]);
@@ -131,29 +135,36 @@ class SesiPresensiController extends Controller
         }
 
         // cekSesiAktif(idPerkuliahan)
-        $sudahAktif = SesiPresensi::where('idPerkuliahan', $request->idPerkuliahan)
+        $sudahAktif = SesiPresensi::where('idPerkuliahan',$request->idPerkuliahan)
                                   ->where('status', 'Aktif')->exists();
         if ($sudahAktif) {
             return back()->withInput()->with('error', 'Sesi presensi sudah aktif');
         }
 
-        // simpanSesi(idPerkuliahan, durasi)
+        $labelPertemuan = 'Pertemuan ' .$request->pertemuan;
+        $materi         =$request->catatan ? trim($request->catatan) : '';$catatanLengkap = $materi !== '' ? "{$labelPertemuan} — {$materi}" : $labelPertemuan;
+
+        // simpanSesi(idPerkuliahan, tanggal, durasi, catatan)
         $sesi = SesiPresensi::create([
             'idPerkuliahan' => $request->idPerkuliahan,
             'kodeQR'        => (string) Str::uuid(),      // sementara, diganti di bawah
+            'tanggal'       => $request->tanggal,
             'waktuMulai'    => now(),
             'durasi'        => $request->durasi,
             'status'        => 'Aktif',
             'latitude'      => $request->latitude ?? 0,
             'longitude'     => $request->longitude ?? 0,
             'radius'        => $request->radius,
+            'catatan'       => $catatanLengkap,
         ]);
 
         // generateQRCode(idSesi) lalu simpanKodeQR(idSesi, kodeQR)
         $sesi->update(['kodeQR' => $this->generateQRCode($sesi->idSesi)]);
 
         // notifikasi ke mahasiswa peserta kuliah: sesi presensi dibuka (SR-21)
-        $kuliah   = Perkuliahan::find($request->idPerkuliahan);
+        $kuliah    = Perkuliahan::find($request->idPerkuliahan);
+        $tglKuliah = Carbon::parse($request->tanggal)->locale('id')->translatedFormat('l, d M Y');
+
         $penerima = DB::table('peserta_kuliah')
                       ->where('idPerkuliahan', $request->idPerkuliahan)->pluck('idMahasiswa');
 
@@ -161,8 +172,7 @@ class SesiPresensiController extends Controller
             DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
                 'idPenerima' => $idMhs,
                 'jenis'      => 'Presensi',
-                'isi'        => 'Sesi presensi ' . $kuliah->namaMatkul . ' kelas ' . $kuliah->kelas
-                              . ' telah dibuka selama ' . $request->durasi . ' menit',
+                'isi'        => "Sesi presensi {$kuliah->namaMatkul} kelas {$kuliah->kelas} ({$catatanLengkap} • {$tglKuliah}) telah dibuka selama {$request->durasi} menit.",
                 'waktu'      => now(),
                 'statusBaca' => false,
             ])->all());
@@ -190,8 +200,8 @@ class SesiPresensiController extends Controller
         }
 
         try {
-            $sesi->update(['status' => 'Selesai']);     // updateStatusSesi(idSesi, "Selesai")
-            $this->kirimNotifTutupSesi($sesi, false);    // kirim notifikasi ke peserta kuliah
+            $sesi->update(['status' => 'Selesai']);
+            $this->kirimNotifTutupSesi($sesi, false);
         } catch (\Throwable $e) {
             return back()->with('error', 'Sesi gagal ditutup');
         }
@@ -207,26 +217,25 @@ class SesiPresensiController extends Controller
         $sesi = SesiPresensi::with('perkuliahan')->findOrFail($id);
         abort_unless($sesi->perkuliahan->idDosen == Auth::id(), 403);
 
-        $namaMatkul    = $sesi->perkuliahan->namaMatkul;
-        $kelas         = $sesi->perkuliahan->kelas;
-        $idPerkuliahan = $sesi->idPerkuliahan;
-        $wasAktif      = $sesi->status === 'Aktif';
+        $namaMatkul    =$sesi->perkuliahan->namaMatkul;
+        $kelas         =$sesi->perkuliahan->kelas;
+        $tglKuliah     = ($sesi->tanggal ?? $sesi->waktuMulai)->locale('id')->translatedFormat('l, d M Y');
+        $idPerkuliahan =$sesi->idPerkuliahan;
+        $wasAktif      =$sesi->status === 'Aktif';
 
         try {
             DB::transaction(function () use ($sesi) {
-                DB::table('presensi')->where('idSesi', $sesi->idSesi)->delete();
-                $sesi->delete();
+                DB::table('presensi')->where('idSesi', $sesi->idSesi)->delete();$sesi->delete();
             });
 
             $penerima = DB::table('peserta_kuliah')
                 ->where('idPerkuliahan', $idPerkuliahan)
                 ->pluck('idMahasiswa');
 
-            if ($penerima->isNotEmpty()) {
-                $sekarang = now();
-                $pesan    = $wasAktif
-                    ? "Sesi presensi {$namaMatkul} kelas {$kelas} telah dibatalkan oleh dosen."
-                    : "Riwayat sesi presensi {$namaMatkul} kelas {$kelas} telah dihapus oleh dosen.";
+            if ($penerima->isNotEmpty()) {$sekarang = now();
+                $pesan    =$wasAktif
+                    ? "Sesi presensi {$namaMatkul} kelas {$kelas} ({$tglKuliah}) telah dibatalkan oleh dosen."
+                    : "Riwayat sesi presensi {$namaMatkul} kelas {$kelas} ({$tglKuliah}) telah dihapus oleh dosen.";
 
                 DB::table('notifikasi')->insert($penerima->map(fn ($idMhs) => [
                     'idPenerima' => $idMhs,
@@ -243,7 +252,7 @@ class SesiPresensiController extends Controller
         return redirect()->route('presensi.dosen')->with('success', 'Sesi presensi berhasil dihapus');
     }
 
-    // daftar mahasiswa yang sudah presensi (dipanggil berkala oleh halaman dosen)
+    // daftar seluruh mahasiswa peserta kelas & status real-time (dipanggil berkala oleh halaman dosen)
     public function daftarHadir($id)
     {
         $this->cekDosen();
@@ -251,20 +260,31 @@ class SesiPresensiController extends Controller
         $sesi = SesiPresensi::with('perkuliahan')->findOrFail($id);
         abort_unless($sesi->perkuliahan->idDosen == Auth::id(), 403);
 
-        $daftar = DB::table('presensi')
-            ->join('user', 'user.idUser', '=', 'presensi.idMahasiswa')
-            ->where('presensi.idSesi', $id)
-            ->where('presensi.status', 'Hadir')
+        $peserta = DB::table('peserta_kuliah')
+            ->join('user', 'user.idUser', '=', 'peserta_kuliah.idMahasiswa')
+            ->leftJoin('presensi', function ($join) use ($id) {$join->on('presensi.idMahasiswa', '=', 'peserta_kuliah.idMahasiswa')
+                     ->where('presensi.idSesi', '=', $id);
+            })
+            ->where('peserta_kuliah.idPerkuliahan', $sesi->idPerkuliahan)
+            ->orderByRaw('CASE WHEN presensi.idPresensi IS NULL THEN 1 ELSE 0 END ASC')
             ->orderBy('presensi.waktu')
-            ->get(['user.nama', 'presensi.waktu']);
+            ->orderBy('user.nama')
+            ->get([
+                'user.nama',
+                'presensi.status',
+                'presensi.waktu',
+            ]);
+
+        $jumlahHadir =$peserta->where('status', 'Hadir')->count();
 
         return response()->json([
-            'hadir'  => $daftar->count(),
-            'total'  => DB::table('peserta_kuliah')->where('idPerkuliahan', $sesi->idPerkuliahan)->count(),
-            'daftar' => $daftar->map(fn ($r) => [
-                'nama'  => $r->nama,
-                'waktu' => \Carbon\Carbon::parse($r->waktu)->format('H:i:s'),
-            ]),
+            'hadir'  => $jumlahHadir,
+            'total'  => $peserta->count(),
+            'daftar' => $peserta->map(fn ($r) => [
+                'nama'   => $r->nama,
+                'status' => $r->status ?? 'Belum Presensi',
+                'waktu'  => $r->waktu ? Carbon::parse($r->waktu)->format('H:i:s') : null,
+            ])->values(),
         ]);
     }
 }

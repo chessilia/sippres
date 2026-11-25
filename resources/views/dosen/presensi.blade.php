@@ -13,8 +13,8 @@
   /* Form Buat Sesi */
   .form-grid-qr {
     display: grid;
-    grid-template-columns: 1.4fr 1fr;
-    gap: 16px 20px;
+    grid-template-columns: 1.5fr 0.9fr 1fr 0.85fr;
+    gap: 16px 16px;
   }
   .radio-pill-group {
     display: flex;
@@ -127,24 +127,58 @@
     border: 1px solid var(--border);
     display: inline-block;
   }
-  .qr-code-text {
+  .qr-code-copy-box {
     margin-top: 10px;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    background: #ffffff;
+    padding: 5px 6px 5px 10px;
+    border-radius: 7px;
+    border: 1px solid var(--border);
+  }
+  .qr-code-text {
     font-family: monospace;
-    font-size: 13px;
+    font-size: 12.5px;
     font-weight: 700;
     color: var(--text-secondary);
-    background: #ffffff;
-    padding: 4px 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .btn-copy-qr {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 5px 9px;
     border-radius: 6px;
-    border: 1px solid var(--border);
-    word-break: break-all;
+    border: 1px solid #bfdbfe;
+    background: #eff6ff;
+    color: var(--primary-hover);
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+  }
+  .btn-copy-qr:hover {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: var(--primary);
+  }
+  .btn-copy-qr.copied {
+    background: #16a34a;
+    color: #ffffff;
+    border-color: #16a34a;
   }
 
   .meta-pills {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
   }
   .meta-pill {
     display: inline-flex;
@@ -157,6 +191,20 @@
     border: 1px solid var(--border);
     padding: 5px 11px;
     border-radius: 7px;
+  }
+  .notes-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    background: #f8fafc;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--primary);
+    border-radius: 8px;
+    padding: 10px 14px;
+    margin-bottom: 14px;
+    font-size: 13.5px;
+    color: var(--text-main);
+    line-height: 1.5;
   }
 
   .pantau-box {
@@ -181,7 +229,7 @@
     list-style: none;
     margin: 14px 0 0;
     padding: 0;
-    max-height: 220px;
+    max-height: 280px;
     overflow-y: auto;
     display: flex;
     flex-direction: column;
@@ -191,6 +239,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    gap: 10px;
     background: #ffffff;
     border: 1px solid var(--border);
     padding: 8px 12px;
@@ -198,10 +247,78 @@
     font-size: 13.5px;
     font-weight: 600;
   }
-  .daftar-hadir li .hadir-time {
-    font-size: 12.5px;
+  .daftar-hadir li.belum {
+    background: #f8fafc;
+    color: var(--text-secondary);
+  }
+  .mhs-left {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    min-width: 0;
+  }
+  .mhs-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 99px;
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 11px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .mhs-nama {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .mhs-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .hadir-time {
+    font-size: 12px;
     color: var(--text-muted);
     font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  .status-pill {
+    font-size: 11.5px;
+    font-weight: 800;
+    padding: 2px 9px;
+    border-radius: 99px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .status-pill.hadir {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+    color: #15803d;
+  }
+  .status-pill.izin {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+    color: #1d4ed8;
+  }
+  .status-pill.sakit {
+    background: #fefce8;
+    border-color: #fef08a;
+    color: #a16207;
+  }
+  .status-pill.alpa {
+    background: #fef2f2;
+    border-color: #fecaca;
+    color: #b91c1c;
+  }
+  .status-pill.belum {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #475569;
   }
   .daftar-hadir-empty {
     text-align: center;
@@ -210,13 +327,18 @@
     padding: 16px 0 4px;
   }
 
-  @media (max-width: 860px) {
-    .form-grid-qr { grid-template-columns: 1fr; }
+  @media (max-width: 1100px) {
+    .form-grid-qr { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 960px) {
     .session-body-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 640px) {
+    .form-grid-qr { grid-template-columns: 1fr; }
   }
 </style>
 
-  <p class="page-subtitle">Buat sesi presensi, tampilkan QR Code kepada mahasiswa, lalu tutup sesi setelah perkuliahan selesai.</p>
+  <p class="page-subtitle">Buat sesi presensi beserta pertemuan &amp; catatan materi perkuliahan, tampilkan QR Code kepada mahasiswa, lalu tutup sesi setelah selesai.</p>
 
   {{-- Form Buat Sesi --}}
   <div class="card" style="margin-top:0">
@@ -230,12 +352,20 @@
         <input type="hidden" name="latitude" id="latitude">
         <input type="hidden" name="longitude" id="longitude">
 
+        @php
+          $selectedMatkulId = old('idPerkuliahan', $daftar->first()->idPerkuliahan);
+          $selectedMatkul   = $daftar->firstWhere('idPerkuliahan', $selectedMatkulId) ?? $daftar->first();
+          $defaultPertemuan = old('pertemuan', $selectedMatkul->pertemuanBerikutnya ?? 1);
+        @endphp
+
         <div class="form-grid-qr">
           <div>
             <label for="idPerkuliahan">Mata Kuliah &amp; Kelas</label>
             <select name="idPerkuliahan" id="idPerkuliahan" required>
               @foreach ($daftar as $p)
-                <option value="{{ $p->idPerkuliahan }}" @selected(old('idPerkuliahan') == $p->idPerkuliahan)>
+                <option value="{{ $p->idPerkuliahan }}"
+                        data-next-pertemuan="{{ $p->pertemuanBerikutnya ?? 1 }}"
+                        @selected($selectedMatkulId == $p->idPerkuliahan)>
                   {{ $p->kodeMatkul }} - {{ $p->namaMatkul }} (Kelas {{ $p->kelas }})
                 </option>
               @endforeach
@@ -243,12 +373,41 @@
           </div>
 
           <div>
-            <label for="radius">Radius Lokasi Presensi (meter)</label>
-            <input type="number" name="radius" id="radius" value="{{ old('radius', 0) }}" min="0" max="1000" required>
+            <label for="pertemuan">Pertemuan ke-</label>
+            <select name="pertemuan" id="pertemuan" required>
+              @for ($i = 1; $i <= 16; $i++)
+                <option value="{{ $i }}" @selected($defaultPertemuan == $i)>Pertemuan {{ $i }}</option>
+              @endfor
+            </select>
             <small style="display:block; margin-top:5px; color:var(--text-muted)">
-              Isi <strong>0</strong> tanpa validasi GPS. Jika diisi &gt; 0, izinkan akses lokasi di browser.
+              Otomatis mengikuti urutan sesi.
             </small>
           </div>
+
+          <div>
+            <label for="tanggal">Tanggal Perkuliahan</label>
+            <input type="date" name="tanggal" id="tanggal" value="{{ old('tanggal', now()->format('Y-m-d')) }}" required>
+            <small style="display:block; margin-top:5px; color:var(--text-muted)">
+              Hari ini ({{ now()->locale('id')->translatedFormat('d M Y') }}).
+            </small>
+          </div>
+
+          <div>
+            <label for="radius">Radius Lokasi (meter)</label>
+            <input type="number" name="radius" id="radius" value="{{ old('radius', 0) }}" min="0" max="1000" required>
+            <small style="display:block; margin-top:5px; color:var(--text-muted)">
+              Isi <strong>0</strong> tanpa validasi GPS.
+            </small>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <label for="catatan">Catatan / Materi Perkuliahan</label>
+          <textarea name="catatan" id="catatan" rows="2" maxlength="450"
+                    placeholder="Contoh: Pembahasan Normalisasi Database &amp; Praktikum ERD">{{ old('catatan') }}</textarea>
+          <small style="display:block; margin-top:4px; color:var(--text-muted)">
+            Opsional. Nomor pertemuan yang dipilih di atas akan otomatis dicantumkan di awal catatan.
+          </small>
         </div>
 
         <div class="row" style="margin-top:14px; margin-bottom:0">
@@ -256,7 +415,7 @@
           <div class="radio-pill-group">
             @foreach ([10, 15, 30, 60] as $d)
               <label class="radio-pill">
-                <input type="radio" name="durasi" value="{{ $d }}" {{ $d == 15 ? 'checked' : '' }}>
+                <input type="radio" name="durasi" value="{{ $d }}" {{ old('durasi', 15) == $d ? 'checked' : '' }}>
                 <span>{{ $d }} menit</span>
               </label>
             @endforeach
@@ -279,8 +438,9 @@
   {{-- Sesi Aktif --}}
   @foreach ($sesiAktif as $s)
     @php
-      $berakhir = $s->waktuBerakhir();
-      $persen   = $s->total > 0 ? round($s->hadir / $s->total * 100) : 0;
+      $berakhir  = $s->waktuBerakhir();
+      $persen    = $s->total > 0 ? round($s->hadir / $s->total * 100) : 0;
+      $tglKuliah = ($s->tanggal ?? $s->waktuMulai)->locale('id')->translatedFormat('l, d M Y');
     @endphp
     <div class="card session-card">
       <div class="session-header">
@@ -315,31 +475,53 @@
       </div>
 
       <div class="session-body-grid">
-        {{-- Kolom Kiri: QR Code --}}
+        {{-- Kolom Kiri: QR Code + Salin Kode --}}
         <div class="qr-box">
           <div class="qr-canvas-wrap">
             <div id="qr-{{ $s->idSesi }}" class="qr" data-kode="{{ $s->kodeQR }}"></div>
           </div>
-          <div class="qr-code-text">{{ $s->kodeQR }}</div>
-          <small style="margin-top:8px; color:var(--text-muted)">Arahkan kamera mahasiswa ke QR Code ini</small>
+
+          <div class="qr-code-copy-box">
+            <span class="qr-code-text" title="{{ $s->kodeQR }}">{{ $s->kodeQR }}</span>
+            <button type="button" class="btn-copy-qr" data-kode="{{ $s->kodeQR }}" onclick="salinKodeQR(this)">
+              <i data-lucide="copy" style="width:13px;height:13px"></i>
+              <span>Salin</span>
+            </button>
+          </div>
+
+          <small style="margin-top:8px; color:var(--text-muted)">Scan QR atau bagikan kode di atas</small>
         </div>
 
-        {{-- Kolom Kanan: Info & Pemantauan Kehadiran --}}
+        {{-- Kolom Kanan: Info, Catatan & Pemantauan Kehadiran --}}
         <div>
           <div class="meta-pills">
+            <span class="meta-pill">
+              <i data-lucide="calendar" style="width:14px;height:14px;color:var(--primary)"></i>
+              {{ $tglKuliah }}
+            </span>
+            <span class="meta-pill">
+              <i data-lucide="clock" style="width:14px;height:14px;color:var(--primary)"></i>
+              {{ $s->waktuMulai->format('H:i') }} - {{ $berakhir->format('H:i') }} WIB ({{ $s->durasi }} mnt)
+            </span>
             <span class="meta-pill">
               <i data-lucide="map-pin" style="width:14px;height:14px;color:var(--primary)"></i>
               Ruang {{ $s->perkuliahan->ruang }}
             </span>
             <span class="meta-pill">
-              <i data-lucide="play-circle" style="width:14px;height:14px;color:var(--primary)"></i>
-              Mulai {{ $s->waktuMulai->format('H:i') }} ({{ $s->durasi }} mnt)
-            </span>
-            <span class="meta-pill">
               <i data-lucide="radar" style="width:14px;height:14px;color:var(--primary)"></i>
-              Radius: {{ $s->radius > 0 ? $s->radius . ' m' : 'Tanpa validasi lokasi' }}
+              {{ $s->radius > 0 ? 'Radius ' . $s->radius . ' m' : 'Tanpa GPS' }}
             </span>
           </div>
+
+          @if ($s->catatan)
+            <div class="notes-banner">
+              <i data-lucide="notebook-pen" style="width:16px;height:16px;color:var(--primary);flex-shrink:0;margin-top:2px"></i>
+              <div>
+                <strong style="display:block; font-size:12.5px; color:var(--text-secondary)">Pertemuan &amp; Materi Perkuliahan:</strong>
+                <span>{{ $s->catatan }}</span>
+              </div>
+            </div>
+          @endif
 
           <div class="pantau-box pantau" data-url="{{ route('presensi.hadir', $s->idSesi) }}">
             <div class="pantau-head">
@@ -376,8 +558,8 @@
         <thead>
           <tr>
             <th>Mata Kuliah</th>
-            <th>Waktu Sesi</th>
-            <th>Kode QR</th>
+            <th>Tanggal &amp; Jam</th>
+            <th>Pertemuan &amp; Materi</th>
             <th style="text-align:center">Kehadiran</th>
             <th>Status</th>
             <th style="text-align:right">Aksi</th>
@@ -385,19 +567,25 @@
         </thead>
         <tbody>
           @foreach ($riwayatSesi as $r)
+            @php
+              $tglRiwayat = ($r->tanggal ?? $r->waktuMulai)->locale('id')->translatedFormat('D, d M Y');
+              $jamSelesai = $r->waktuMulai->copy()->addMinutes($r->durasi)->format('H:i');
+            @endphp
             <tr>
               <td>
                 <strong>{{ $r->perkuliahan->namaMatkul }}</strong><br>
                 <small style="color:var(--text-muted)">Kelas {{ $r->perkuliahan->kelas }} • Ruang {{ $r->perkuliahan->ruang }}</small>
               </td>
               <td style="white-space:nowrap">
-                {{ $r->waktuMulai->format('d/m/Y H:i') }}<br>
-                <small style="color:var(--text-muted)">Durasi {{ $r->durasi }} menit</small>
+                <strong>{{ $tglRiwayat }}</strong><br>
+                <small style="color:var(--text-muted)">{{ $r->waktuMulai->format('H:i') }} - {{ $jamSelesai }} WIB</small>
               </td>
-              <td>
-                <code style="font-size:12.5px; background:var(--bg-subtle); padding:3px 7px; border-radius:5px; border:1px solid var(--border)">
-                  {{ $r->kodeQR }}
-                </code>
+              <td style="max-width:260px">
+                @if ($r->catatan)
+                  <span style="font-size:13.5px; color:var(--text-main)">{{ $r->catatan }}</span>
+                @else
+                  <small style="color:var(--text-muted); font-style:italic">Tidak ada catatan</small>
+                @endif
               </td>
               <td style="text-align:center">
                 <strong>{{ $r->hadir }} / {{ $r->total }}</strong>
@@ -423,6 +611,47 @@
 @push('scripts')
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <script>
+    // Otomatis sesuaikan Pertemuan ke- saat Mata Kuliah diganti
+    var selectMatkul = document.getElementById('idPerkuliahan');
+    var selectPertemuan = document.getElementById('pertemuan');
+    if (selectMatkul && selectPertemuan) {
+      selectMatkul.addEventListener('change', function () {
+        var opt = this.options[this.selectedIndex];
+        if (opt && opt.dataset.nextPertemuan) {
+          selectPertemuan.value = opt.dataset.nextPertemuan;
+        }
+      });
+    }
+
+    // Salin kode QR langsung ke clipboard
+    function salinKodeQR(btn) {
+      var kode = btn.dataset.kode;
+      var label = btn.querySelector('span');
+
+      function tandaiBerhasil() {
+        btn.classList.add('copied');
+        label.textContent = 'Tersalin!';
+        setTimeout(function () {
+          btn.classList.remove('copied');
+          label.textContent = 'Salin';
+        }, 2000);
+      }
+
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(kode).then(tandaiBerhasil);
+      } else {
+        var temp = document.createElement('textarea');
+        temp.value = kode;
+        temp.style.position = 'fixed';
+        temp.style.opacity = '0';
+        document.body.appendChild(temp);
+        temp.select();
+        document.execCommand('copy');
+        document.body.removeChild(temp);
+        tandaiBerhasil();
+      }
+    }
+
     // Inisialisasi lebar bar awal
     document.querySelectorAll('.progress-fill').forEach(function (el) {
       el.style.width = (el.dataset.w || 0) + '%';
@@ -452,7 +681,7 @@
     hitungMundur();
     setInterval(hitungMundur, 1000);
 
-    // Perbarui daftar mahasiswa hadir setiap 3 detik
+    // Perbarui daftar seluruh mahasiswa & status real-time setiap 3 detik
     document.querySelectorAll('.pantau').forEach(function (el) {
       function muat() {
         fetch(el.dataset.url, { headers: { 'Accept': 'application/json' } })
@@ -465,21 +694,56 @@
 
             var ul = el.querySelector('.daftar-hadir');
             ul.innerHTML = '';
+
             if (d.daftar.length === 0) {
               var empty = document.createElement('div');
               empty.className = 'daftar-hadir-empty';
-              empty.textContent = 'Belum ada mahasiswa yang melakukan presensi.';
+              empty.textContent = 'Belum ada mahasiswa yang terdaftar pada kelas ini.';
               ul.appendChild(empty);
             } else {
-              d.daftar.forEach(function (m) {
+              d.daftar.forEach(function (m, idx) {
                 var li = document.createElement('li');
+                if (m.status === 'Belum Presensi') {
+                  li.className = 'belum';
+                }
+
+                var leftDiv = document.createElement('div');
+                leftDiv.className = 'mhs-left';
+
+                var numSpan = document.createElement('span');
+                numSpan.className = 'mhs-num';
+                numSpan.textContent = idx + 1;
+
                 var namaSpan = document.createElement('span');
+                namaSpan.className = 'mhs-nama';
                 namaSpan.textContent = m.nama;
-                var waktuSpan = document.createElement('span');
-                waktuSpan.className = 'hadir-time';
-                waktuSpan.textContent = m.waktu;
-                li.appendChild(namaSpan);
-                li.appendChild(waktuSpan);
+
+                leftDiv.appendChild(numSpan);
+                leftDiv.appendChild(namaSpan);
+
+                var rightDiv = document.createElement('div');
+                rightDiv.className = 'mhs-right';
+
+                if (m.waktu) {
+                  var waktuSpan = document.createElement('span');
+                  waktuSpan.className = 'hadir-time';
+                  waktuSpan.textContent = m.waktu;
+                  rightDiv.appendChild(waktuSpan);
+                }
+
+                var statusSpan = document.createElement('span');
+                var statusClass = 'belum';
+                if (m.status === 'Hadir') statusClass = 'hadir';
+                else if (m.status === 'Izin') statusClass = 'izin';
+                else if (m.status === 'Sakit') statusClass = 'sakit';
+                else if (m.status === 'Alpa') statusClass = 'alpa';
+
+                statusSpan.className = 'status-pill ' + statusClass;
+                statusSpan.textContent = m.status;
+                rightDiv.appendChild(statusSpan);
+
+                li.appendChild(leftDiv);
+                li.appendChild(rightDiv);
                 ul.appendChild(li);
               });
             }

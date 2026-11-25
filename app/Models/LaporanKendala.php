@@ -11,7 +11,7 @@ class LaporanKendala extends Model
     public    $timestamps = false;
 
     protected $fillable = [
-        'idPelapor', 'kategori', 'deskripsi', 'status', 'tindakLanjut', 'tanggalLapor',
+        'idPelapor', 'kategori', 'deskripsi', 'foto', 'status', 'tindakLanjut', 'tanggalLapor',
     ];
 
     protected $casts = ['tanggalLapor' => 'datetime'];
@@ -24,7 +24,7 @@ class LaporanKendala extends Model
     // label yang dilihat pengguna: "Diproses" (PDM) ditampilkan sebagai "Ditangani" (UI)
     public function getLabelStatusAttribute(): string
     {
-        return $this->status === 'Diproses' ? 'Ditangani' : $this->status;
+        return $this->status === 'Diproses' ? 'Ditangani' :$this->status;
     }
 
     // nama kelas CSS untuk badge (tanpa spasi)

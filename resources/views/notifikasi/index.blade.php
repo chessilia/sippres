@@ -17,6 +17,12 @@
     color: var(--text-secondary);
     font-size: 14.5px;
   }
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
 
   /* Split Grid saat Detail Dibuka */
   .notif-layout {
@@ -172,9 +178,20 @@
 
   <div class="page-header-bar">
     <p class="page-subtitle">Klik salah satu notifikasi untuk membaca pesan lengkapnya.</p>
-    <span class="badge {{ $belumDibaca > 0 ? 'st-Baru' : 'st-Selesai' }}" style="padding:5px 12px; font-size:13px">
-      {{ $belumDibaca }} belum dibaca
-    </span>
+    <div class="header-actions">
+      <span class="badge {{ $belumDibaca > 0 ? 'st-Baru' : 'st-Selesai' }}" style="padding:5px 12px; font-size:13px">
+        {{ $belumDibaca }} belum dibaca
+      </span>
+
+      @if ($belumDibaca > 0)
+        <form method="POST" action="{{ route('notifikasi.bacaSemua') }}" style="margin:0">
+          @csrf
+          <button type="submit" class="btn-primary" style="padding:6px 14px; font-size:13px">
+            <i data-lucide="check-check" style="width:15px;height:15px"></i> Tandai Semua Dibaca
+          </button>
+        </form>
+      @endif
+    </div>
   </div>
 
   <div class="notif-layout {{ $detail ? 'has-detail' : '' }}">
@@ -234,6 +251,12 @@
           <div class="detail-footer">
             <a class="btn btn-primary" href="{{ route('riwayat', ['jenis' => 'izin']) }}">
               <i data-lucide="file-text" style="width:15px;height:15px"></i> Lihat Riwayat Izin
+            </a>
+          </div>
+        @elseif ($detail->jenis === 'Presensi' && Auth::user()->role === 'Mahasiswa')
+          <div class="detail-footer">
+            <a class="btn btn-primary" href="{{ route('riwayat', ['jenis' => 'presensi']) }}">
+              <i data-lucide="check-square" style="width:15px;height:15px"></i> Lihat Riwayat Presensi
             </a>
           </div>
         @endif

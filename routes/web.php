@@ -64,6 +64,7 @@ Route::middleware('auth')->group(function () {
 
     // notifikasi dan lapor kendala (mahasiswa dan dosen)
     Route::get('/notifikasi', [NotifikasiController::class, 'getNotifikasi'])->name('notifikasi');
+    Route::post('/notifikasi/baca-semua', [NotifikasiController::class, 'bacaSemua'])->name('notifikasi.bacaSemua');
     Route::get('/crisis-center', [CrisisCenterController::class, 'index'])->name('crisis.pengguna');
     Route::post('/crisis-center', [CrisisCenterController::class, 'kirimLaporan'])->name('crisis.kirim');
 
